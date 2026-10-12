@@ -1,234 +1,172 @@
+// Homework 1 only: arithmetic on y² = x³ + 7 over integers modulo 17.
 (() => {
-    "use strict";
-    const p = 17;
-    const G = [1, 5];
-    const $ = (id) => document.getElementById(id);
-    let timer = null;
-    let animationStep = 1;
-
-    function mod(a, m = p) {
-        return ((a % m) + m) % m;
+  const p = 17;
+  const G = [1, 5];
+  const $ = id => document.getElementById(id);
+  const mod = n => ((n % p) + p) % p;
+  const point = P => P === null ? 'O' : `(${P[0]}, ${P[1]})`;
+  const inverse = n => {
+    for (let i = 1; i < p; i++) if (mod(n * i) === 1) return i;
+    throw new Error('No modular inverse');
+  };
+  function add(P, R) {
+    if (P === null) return R;
+    if (R === null) return P;
+    const [x1, y1] = P, [x2, y2] = R;
+    if (x1 === x2 && mod(y1 + y2) === 0) return null;
+    const same = x1 === x2 && y1 === y2;
+    const slope = same
+      ? mod(3 * x1 * x1 * inverse(2 * y1))
+      : mod((y2 - y1) * inverse(x2 - x1));
+    const x3 = mod(slope * slope - x1 - x2);
+    return [x3, mod(slope * (x1 - x3) - y1)];
+  }
+  const points = [];
+  let current = null;
+  for (let k = 1; k <= 8; k++) {
+    current = add(current, G);
+    points.push(current);
+  }
+  let selectedKey = null;
+  let shownStep = 1;
+  let animationTimer = null;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  function draw(name, attributes, parent = $('curvePlot')) {
+    const node = document.createElementNS(svgNS, name);
+    for (const [key, value] of Object.entries(attributes)) {
+      if (key === 'text') node.textContent = value;
+      else node.setAttribute(key, value);
     }
-    function inverse(a, m = p) {
-        a = mod(a, m);
-        for (let i = 1; i < m; i++) if (mod(a * i, m) === 1) return i;
-        throw new Error("No modular inverse exists.");
+    parent.append(node);
+    return node;
+  }
+  function graph() {
+    const plot = $('curvePlot');
+    plot.replaceChildren();
+    const px = x => 47 + x * 22.5;
+    const py = y => 30 + (16 - y) * 22.5;
+    for (let n = 0; n <= 16; n++) {
+      const color = n % 4 === 0 ? '#c4ceda' : '#e8edf3';
+      draw('line', {x1: px(n), y1: py(16), x2: px(n), y2: py(0), stroke: color});
+      draw('line', {x1: px(0), y1: py(n), x2: px(16), y2: py(n), stroke: color});
+      if (n % 4 === 0) {
+        draw('text', {x: px(n), y: 410, 'text-anchor': 'middle', fill: '#53647a', 'font-size': 11, text: n});
+        draw('text', {x: 34, y: py(n) + 4, 'text-anchor': 'end', fill: '#53647a', 'font-size': 11, text: n});
+      }
     }
-    function samePoint(P, Q) {
-        return P === null
-            ? Q === null
-            : Q !== null && P[0] === Q[0] && P[1] === Q[1];
+    draw('text', {x: 423, y: 410, fill: '#17243a', text: 'x'});
+    draw('text', {x: 30, y: 22, fill: '#17243a', text: 'y'});
+    for (let x = 0; x < p; x++) for (let y = 0; y < p; y++) {
+      if (mod(y * y - x * x * x - 7) === 0) {
+        draw('circle', {cx: px(x), cy: py(y), r: 3, fill: '#adb9c8'});
+      }
     }
-    function add(P, Q) {
-        if (P === null) return Q;
-        if (Q === null) return P;
-        const [x1, y1] = P,
-            [x2, y2] = Q;
-        if (x1 === x2 && mod(y1 + y2) === 0) return null;
-        let lambda;
-        if (samePoint(P, Q)) {
-            if (y1 === 0) return null;
-            lambda = mod(3 * x1 * x1 * inverse(2 * y1));
-        } else {
-            lambda = mod((y2 - y1) * inverse(x2 - x1));
-        }
-        const x3 = mod(lambda * lambda - x1 - x2);
-        const y3 = mod(lambda * (x1 - x3) - y1);
-        return [x3, y3];
-    }
-    function multiply(k, P = G) {
-        let result = null;
-        let addend = P;
-        let n = k;
-        while (n > 0) {
-            if (n % 2 === 1) result = add(result, addend);
-            addend = add(addend, addend);
-            n = Math.floor(n / 2);
-        }
-        return result;
-    }
-    function pointText(P) {
-        return P === null ? "O (point at infinity)" : `(${P[0]}, ${P[1]})`;
-    }
-    function pointShort(P) {
-        return P === null ? "O" : `(${P[0]}, ${P[1]})`;
-    }
-    function allMultiples() {
-        const list = [];
-        let current = null;
-        for (let k = 1; k <= 8; k++) {
-            current = add(current, G);
-            list.push({ k, point: current });
-        }
-        return list;
-    }
-    const multiples = allMultiples();
-
-    function renderSequence(k) {
-        const tbody = $("sequenceTable").querySelector("tbody");
-        tbody.innerHTML = "";
-        for (let i = 1; i <= k; i++) {
-            const P = multiply(i);
-            const tr = document.createElement("tr");
-            if (i === k) tr.className = "active-row";
-            tr.innerHTML = `<td>${i}G</td><td class="mono">${pointShort(P)}</td><td>${i === 1 ? "Base point" : i === k ? "Toy public key" : "Add G once more"}</td>`;
-            tbody.appendChild(tr);
-        }
-    }
-    function renderAllPoints(k) {
-        const tbody = $("allPointsTable").querySelector("tbody");
-        tbody.innerHTML = "";
-        multiples.forEach(({ k: n, point }) => {
-            const tr = document.createElement("tr");
-            if (n === k) tr.className = "active-row";
-            const xb = point[0].toString(2).padStart(5, "0");
-            const yb = point[1].toString(2).padStart(5, "0");
-            tr.innerHTML = `<td>${n}</td><td class="mono">${pointShort(point)}</td><td class="mono">${xb}</td><td class="mono">${yb}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-    function renderFrequency() {
-        const xCounts = new Map(),
-            yCounts = new Map();
-        multiples.forEach(({ point }) => {
-            xCounts.set(point[0], (xCounts.get(point[0]) || 0) + 1);
-            yCounts.set(point[1], (yCounts.get(point[1]) || 0) + 1);
-        });
-        const tbody = $("frequencyTable").querySelector("tbody");
-        tbody.innerHTML = "";
-        const entries = [...xCounts.entries()]
-            .sort((a, b) => a[0] - b[0])
-            .map(([v, c]) => [`x = ${v}`, c])
-            .concat(
-                [...yCounts.entries()]
-                    .sort((a, b) => a[0] - b[0])
-                    .map(([v, c]) => [`y = ${v}`, c]),
-            );
-        entries.forEach(([label, count]) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td class="mono">${label}</td><td>${count}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-    function renderBits() {
-        const tbody = $("bitsTable").querySelector("tbody");
-        tbody.innerHTML = "";
-        for (let bit = 0; bit < 5; bit++) {
-            let xs = 0,
-                ys = 0;
-            multiples.forEach(({ point }) => {
-                xs += (point[0] >> bit) & 1;
-                ys += (point[1] >> bit) & 1;
-            });
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${bit}</td><td>${xs} / 8</td><td>${ys} / 8</td>`;
-            tbody.appendChild(tr);
-        }
-    }
-    function renderPlot(k, currentStep) {
-        const svg = $("pointPlot");
-        const left = 58,
-            top = 28,
-            step = 23,
-            max = 16;
-        const xPx = (x) => left + x * step;
-        const yPx = (y) => top + (max - y) * step;
-        let s = "";
-        // Grid and tick labels
-        for (let i = 0; i <= 16; i += 1) {
-            const opacity = i % 4 === 0 ? 0.65 : 0.22;
-            s += `<line x1="${xPx(i)}" y1="${top}" x2="${xPx(i)}" y2="${yPx(0)}" stroke="#9aa9bf" stroke-opacity="${opacity}" stroke-width="1"/>`;
-            s += `<line x1="${left}" y1="${yPx(i)}" x2="${xPx(16)}" y2="${yPx(i)}" stroke="#9aa9bf" stroke-opacity="${opacity}" stroke-width="1"/>`;
-            if (i % 4 === 0) {
-                s += `<text x="${xPx(i)}" y="${yPx(0) + 19}" font-size="11" text-anchor="middle" fill="#45556d">${i}</text>`;
-                s += `<text x="${left - 14}" y="${yPx(i) + 4}" font-size="11" text-anchor="end" fill="#45556d">${i}</text>`;
-            }
-        }
-        s += `<text x="${xPx(16) + 8}" y="${yPx(0) + 19}" font-size="12" fill="#172033">x</text>`;
-        s += `<text x="${left - 14}" y="${top - 10}" font-size="12" text-anchor="middle" fill="#172033">y</text>`;
-        // Mark all curve points for context, then highlight multiples of G.
-        const allCurvePoints = [];
-        for (let x = 0; x < p; x++)
-            for (let y = 0; y < p; y++)
-                if (mod(y * y - x * x * x - 7) === 0)
-                    allCurvePoints.push([x, y]);
-        allCurvePoints.forEach(([x, y]) => {
-            s += `<circle cx="${xPx(x)}" cy="${yPx(y)}" r="3.2" fill="#c3ccd9" stroke="#75849a" stroke-width=".5"/>`;
-        });
-        multiples.forEach(({ k: n, point }) => {
-            const active = n === currentStep;
-            const target = n === k;
-            s += `<circle cx="${xPx(point[0])}" cy="${yPx(point[1])}" r="${active ? 7 : 4.8}" fill="${active ? "#e29a21" : "#275dad"}" stroke="${target ? "#a4262c" : "#ffffff"}" stroke-width="${target ? 2.4 : 1.1}"/>`;
-            s += `<text x="${xPx(point[0]) + 7}" y="${yPx(point[1]) - 7}" font-size="10.5" fill="#27364c">${n}G</text>`;
-        });
-        svg.innerHTML = s;
-    }
-    function stopTimer() {
-        if (timer !== null) clearInterval(timer);
-        timer = null;
-        $("play").textContent = "Play slowly";
-    }
-    function getK() {
-        const raw = Number($("privateKey").value);
-        if (!Number.isInteger(raw) || raw < 1 || raw > 8) {
-            $("privateKey").setCustomValidity("Choose an integer from 1 to 8.");
-            $("privateKey").reportValidity();
-            return null;
-        }
-        $("privateKey").setCustomValidity("");
-        return raw;
-    }
-    function updateResults(resetAnimation = true) {
-        const k = getK();
-        if (k === null) return;
-        stopTimer();
-        if (resetAnimation) animationStep = 1;
-        const Q = multiply(k);
-        $("kValue").textContent = `k = ${k}`;
-        $("qValue").textContent = `Q = ${k}G = ${pointShort(Q)}`;
-        $("pubValue").textContent = pointShort(Q);
-        $("animationStatus").textContent =
-            `Animation step: ${animationStep}G = ${pointShort(multiply(animationStep))}`;
-        renderSequence(k);
-        renderAllPoints(k);
-        renderPlot(k, animationStep);
-    }
-    function advanceStep() {
-        const k = getK();
-        if (k === null) return;
-        animationStep = animationStep >= k ? 1 : animationStep + 1;
-        $("animationStatus").textContent =
-            `Animation step: ${animationStep}G = ${pointShort(multiply(animationStep))}`;
-        renderPlot(k, animationStep);
-    }
-    $("calculate").addEventListener("click", () => updateResults(true));
-    $("privateKey").addEventListener("change", () => updateResults(true));
-    $("step").addEventListener("click", advanceStep);
-    $("reset").addEventListener("click", () => {
-        stopTimer();
-        animationStep = 1;
-        updateResults(false);
+    points.slice(0, selectedKey).forEach(([x, y], i) => {
+      const circle = draw('circle', {
+        cx: px(x), cy: py(y), r: shownStep === i + 1 ? 7 : 5,
+        fill: shownStep === i + 1 ? '#e29a21' : '#235da6'
+      });
+      draw('title', {text: `${i + 1}G = (${x}, ${y})`}, circle);
+      draw('text', {x: px(x) + 10, y: py(y) + (i === 5 ? 14 : -8),
+        fill: '#17243a', 'font-size': 11, text: `${i + 1}G`});
     });
-    $("play").addEventListener("click", () => {
-        const k = getK();
-        if (k === null) return;
-        if (timer !== null) {
-            stopTimer();
-            return;
-        }
-        $("play").textContent = "Pause animation";
-        timer = setInterval(() => {
-            if (animationStep >= k) {
-                stopTimer();
-                return;
-            }
-            animationStep += 1;
-            $("animationStatus").textContent =
-                `Animation step: ${animationStep}G = ${pointShort(multiply(animationStep))}`;
-            renderPlot(k, animationStep);
-        }, 900);
-    });
-    renderFrequency();
-    renderBits();
-    updateResults(true);
+    const Q = points[selectedKey - 1];
+    draw('circle', {cx: px(Q[0]), cy: py(Q[1]), r: 11,
+      fill: 'none', stroke: '#b02f3b', 'stroke-width': 2.5});
+    const P = points[shownStep - 1];
+    let description = `Step ${shownStep} of ${selectedKey}: `;
+    if (shownStep === 1) description += `O + G = ${point(P)}.`;
+    else {
+      const before = points[shownStep - 2];
+      const doubling = before[0] === G[0] && before[1] === G[1];
+      const slope = doubling
+        ? mod(3 * before[0] * before[0] * inverse(2 * before[1]))
+        : mod((G[1] - before[1]) * inverse(G[0] - before[0]));
+      description += `${point(before)} + G = ${point(P)}; slope λ = ${slope} (mod 17).`;
+    }
+    $('graphStep').textContent = description;
+    plot.setAttribute('aria-label', `${description} Public key Q = ${point(Q)}.`);
+    $('previousStep').disabled = shownStep === 1;
+    $('nextStep').disabled = shownStep === selectedKey;
+    $('playAnimation').disabled = selectedKey === 1;
+    [...$('steps').children].forEach((row, i) => row.classList.toggle('current-step', i + 1 === shownStep));
+  }
+  function stopAnimation() {
+    clearInterval(animationTimer);
+    animationTimer = null;
+    $('playAnimation').textContent = 'Play animation';
+    $('playAnimation').setAttribute('aria-pressed', 'false');
+  }
+  function toggleAnimation() {
+    if (animationTimer !== null) {
+      stopAnimation();
+      return;
+    }
+    if (shownStep === selectedKey) {
+      shownStep = 1;
+      graph();
+    }
+    $('playAnimation').textContent = 'Pause animation';
+    $('playAnimation').setAttribute('aria-pressed', 'true');
+    animationTimer = setInterval(() => {
+      shownStep++;
+      graph();
+      if (shownStep === selectedKey) stopAnimation();
+    }, 1000);
+  }
+  const bits = n => n.toString(2).padStart(5, '0');
+  function table(id, rows) {
+    const body = $(id);
+    body.replaceChildren();
+    for (const cells of rows) {
+      const tr = body.insertRow();
+      for (const value of cells) tr.insertCell().textContent = value;
+    }
+  }
+  function calculate() {
+    const input = $('privateKey');
+    const k = Number(input.value);
+    if (input.value === '' || !Number.isInteger(k) || k < 1 || k > 8) {
+      $('error').textContent = 'Please enter a whole number from 1 to 8.';
+      return;
+    }
+    stopAnimation();
+    $('error').textContent = '';
+    $('result').textContent = `TOY PUBLIC KEY: Q = ${k}G = ${point(points[k - 1])}`;
+    table('steps', points.slice(0, k).map((P, i) => [
+      `${i + 1}G`, point(P)
+    ]));
+    selectedKey = k;
+    shownStep = 1;
+    graph();
+    $('calculate').disabled = true;
+  }
+  function updateCalculateButton() {
+    stopAnimation();
+    $('calculate').disabled = Number($('privateKey').value) === selectedKey;
+    $('error').textContent = '';
+  }
+  table('allPoints', points.map((P, i) => [i + 1, point(P), bits(P[0]), bits(P[1])]));
+  const x = new Map(), y = new Map();
+  for (const P of points) {
+    x.set(P[0], (x.get(P[0]) || 0) + 1);
+    y.set(P[1], (y.get(P[1]) || 0) + 1);
+  }
+  table('frequencies', [...new Set([...x.keys(), ...y.keys()])].sort((a, b) => a - b)
+    .map(value => [value, x.get(value) || 0, y.get(value) || 0]));
+  table('bitCounts', [0, 1, 2, 3, 4].map(bit => [bit,
+    points.reduce((sum, P) => sum + ((P[0] >> bit) & 1), 0),
+    points.reduce((sum, P) => sum + ((P[1] >> bit) & 1), 0)
+  ]));
+  const distances = points.slice(1).map((P, i) => {
+    const before = bits(points[i][0]) + bits(points[i][1]);
+    const after = bits(P[0]) + bits(P[1]);
+    return [...before].filter((bit, j) => bit !== after[j]).length;
+  });
+  $('distances').textContent = distances.join(', ') + ' (out of 10)';
+  $('calculate').addEventListener('click', calculate);
+  $('privateKey').addEventListener('input', updateCalculateButton);
+  $('previousStep').addEventListener('click', () => { stopAnimation(); shownStep--; graph(); });
+  $('nextStep').addEventListener('click', () => { stopAnimation(); shownStep++; graph(); });
+  $('playAnimation').addEventListener('click', toggleAnimation);
 })();

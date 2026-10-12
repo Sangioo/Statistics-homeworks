@@ -1,335 +1,90 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Homework 2 — From a Wallet Seed to an Ethereum Address</title>
+  <title>Homework 2 — From Mnemonic to Ethereum Address</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
+    <nav><a href="index.html">Home</a><a href="homework-1.html">Homework 1</a></nav>
     <header>
-      <p><a class="home-link" href="index.html">Statistics homeworks</a></p>
-      <h1>Elliptic-Curve Cryptography and Ethereum Wallets</h1>
-      <nav aria-label="Navigazione homework">
-        <a href="homework-1.html">Homework 1</a>
-        <a href="homework-2.html">Homework 2</a>
-      </nav>
+      <h1>Homework 2: From mnemonic to Ethereum address</h1>
+      <p>Different cryptographic tools perform different steps.</p>
     </header>
-            <section id="hw2">
-                <h2>HMWK 2 — From a wallet seed to an Ethereum address</h2>
-                <p>
-                    A wallet normally uses a random source of entropy to create
-                    a mnemonic, then derives keys deterministically. The
-                    mnemonic is not itself the Ethereum private key.
-                </p>
-                <div class="formula">
-                    Mnemonic → BIP-39 seed → BIP-32 / BIP-44 child private key →
-                    secp256k1 public key → Keccak-256 → 20-byte Ethereum address
-                    → EIP-55 checksum casing
-                </div>
-                <h3>Role of each standard or primitive</h3>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Technology</th>
-                                <th>Purpose</th>
-                                <th>Simple explanation</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>BIP-39</strong></td>
-                                <td>Mnemonic and seed generation</td>
-                                <td>
-                                    Encodes random entropy as a list of words,
-                                    adding a small SHA-256-based checksum. The
-                                    words and optional passphrase are processed
-                                    with PBKDF2-HMAC-SHA512 (2048 iterations) to
-                                    obtain a 512-bit seed.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>BIP-32</strong></td>
-                                <td>
-                                    Hierarchical deterministic key derivation
-                                </td>
-                                <td>
-                                    Derives a tree of child keys from one seed
-                                    using HMAC-SHA512 and a chain code. The same
-                                    seed and derivation path reproduce the same
-                                    keys.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>BIP-44</strong></td>
-                                <td>
-                                    Path convention for multi-account wallets
-                                </td>
-                                <td>
-                                    Organizes derived keys with the path
-                                    <code
-                                        >m / purpose' / coin_type' / account' /
-                                        change / address_index</code
-                                    >. A common Ethereum first-address path is
-                                    <code>m/44'/60'/0'/0/0</code>.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>secp256k1</strong></td>
-                                <td>Public-key cryptography and signatures</td>
-                                <td>
-                                    The private key is a scalar k; the public
-                                    key is Q = kG. Ethereum uses this curve with
-                                    ECDSA signatures to authorize transactions.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Keccak-256</strong></td>
-                                <td>Hashing for address derivation</td>
-                                <td>
-                                    Hash the 64-byte public-key coordinates x||y
-                                    (the uncompressed public key without its
-                                    leading <code>0x04</code> byte). The
-                                    Ethereum address is the last 20 bytes of the
-                                    32-byte Keccak-256 digest.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>EIP-55</strong></td>
-                                <td>Address checksum encoding</td>
-                                <td>
-                                    Hashes the lowercase hexadecimal address
-                                    (without <code>0x</code>) with Keccak-256.
-                                    The hash determines which alphabetic address
-                                    characters are uppercase. This helps detect
-                                    typing mistakes; it does not encrypt the
-                                    address or prove ownership.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
 
-                <h3>Key generation versus key derivation</h3>
-                <p>
-                    <strong>Key generation</strong> begins with fresh
-                    randomness/entropy to create the initial secret material.
-                    <strong>Key derivation</strong> deterministically computes
-                    child keys from an existing seed or parent key and a path. A
-                    wallet can therefore back up one mnemonic and recreate many
-                    addresses without separately backing up each private key.
-                </p>
-                <h3>Hashing, checksums and encoding</h3>
-                <p>
-                    <strong>Hashing</strong> maps input data to a fixed-size
-                    digest; it is not encryption and is not normally reversible.
-                    <strong>Checksum casing</strong> in EIP-55 gives a way to
-                    spot many address transcription errors.
-                    <strong>Encoding</strong> turns data into a representation
-                    people or software can handle: mnemonic words represent
-                    entropy, hexadecimal represents bytes, and EIP-55 changes
-                    letter case without changing the underlying 20-byte address.
-                </p>
-                <h3>Historical context (approximate order)</h3>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Year</th>
-                                <th>Milestone</th>
-                                <th>Why it matters</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1977</td>
-                                <td>
-                                    RSA proposed at MIT (the famous RSA paper
-                                    was published in 1978)
-                                </td>
-                                <td>
-                                    Early practical public-key cryptography and
-                                    digital-signature design.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2001–2002</td>
-                                <td>SHA-2 family / SHA-512 standardized</td>
-                                <td>
-                                    NIST's FIPS 180-2, which specifies SHA-256,
-                                    SHA-384 and SHA-512, was published in August
-                                    2002.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2012</td>
-                                <td>BIP-32</td>
-                                <td>
-                                    Standardized hierarchical deterministic
-                                    wallets.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2013</td>
-                                <td>BIP-39</td>
-                                <td>
-                                    Standardized mnemonic words and seed
-                                    generation.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2014</td>
-                                <td>BIP-44</td>
-                                <td>
-                                    Standardized a multi-account hierarchy and
-                                    derivation-path roles.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2015</td>
-                                <td>NIST SHA-3 (FIPS 202)</td>
-                                <td>
-                                    NIST standardized SHA-3, based on its
-                                    selected Keccak design.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>2016</td>
-                                <td>EIP-55</td>
-                                <td>
-                                    Specified mixed-case checksum encoding for
-                                    Ethereum addresses.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p>
-                    <strong>SHA-2 versus Keccak/SHA-3:</strong> these are
-                    different hash-function designs. SHA-512 belongs to SHA-2.
-                    NIST SHA-3 was based on the Keccak design, but Ethereum's
-                    <strong
-                        >Keccak-256 is not identical to standardized
-                        SHA3-256</strong
-                    >: the padding/domain-separation convention differs, so the
-                    outputs differ. Implementations must use Ethereum-compatible
-                    Keccak-256 for Ethereum address derivation.
-                </p>
+    <section>
+      <h2>The wallet pipeline</h2>
+      <p>A wallet starts with random entropy. A common Ethereum externally owned account (EOA) then follows this path:</p>
+      <p class="answer">Entropy → BIP-39 mnemonic → BIP-39 seed → BIP-32/BIP-44 private key → secp256k1 public key → Keccak-256 address → EIP-55 checksummed address</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Step</th><th scope="col">Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><strong>BIP-39</strong></td><td>Encodes random bits as a memorable word list, with a short SHA-256 checksum. PBKDF2-HMAC-SHA512 turns the mnemonic and optional passphrase into a 512-bit seed. The mnemonic itself is not a private key.</td></tr>
+            <tr><td><strong>BIP-32</strong></td><td>Uses HMAC-SHA512 to derive a master private key and chain code from the seed, then a reproducible tree of child keys.</td></tr>
+            <tr><td><strong>BIP-44</strong></td><td>Defines the path layout <code>m/purpose'/coin_type'/account'/change/index</code>. One common path for the first Ethereum address is <code>m/44'/60'/0'/0/0</code>; 60 identifies Ethereum and ' marks a hardened step. Wallets may use other paths.</td></tr>
+            <tr><td><strong>secp256k1</strong></td><td>Turns private scalar k into public point Q = kG. Ethereum also uses this curve with ECDSA to sign transactions. This is public-key cryptography, not hashing.</td></tr>
+            <tr><td><strong>Keccak-256</strong></td><td>Hashes the 64 bytes x || y of the uncompressed public key, excluding its leading 0x04 byte. The last 20 bytes of the 32-byte digest form the Ethereum address.</td></tr>
+            <tr><td><strong>EIP-55</strong></td><td>Hashes the lowercase hexadecimal address as ASCII text and uses the hash to choose upper or lower case for letters. It helps detect typing errors; the underlying 20 address bytes do not change.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Public example:</strong> the known BIP-39 mnemonic “abandon” repeated 11 times followed by “about”, with an empty passphrase and path <code>m/44'/60'/0'/0/0</code>, leads to <code>0x9858EfFD232B4033E47d90003D41EC34EcaEda94</code>. This example is public; it must never be used to store funds. A different passphrase or derivation path changes the result.</p>
+    </section>
 
-                <h3>Why not use one algorithm for everything?</h3>
-                <p>
-                    These steps solve different problems. BIP-39, BIP-32 and
-                    BIP-44 make secrets easier to back up and organize into
-                    reproducible keys. secp256k1 links a private key to a public
-                    key and supports signatures. Keccak-256 compresses the
-                    public key into the short address identifier. EIP-55 adds a
-                    human-readable error check to the hexadecimal
-                    representation. One primitive cannot replace all these roles
-                    without losing required functionality.
-                </p>
+    <section>
+      <h2>Why several techniques?</h2>
+      <p><strong>Key generation</strong> needs new unpredictable randomness. <strong>Key derivation</strong> reproducibly computes keys from an existing seed and a path. BIP-39, BIP-32 and BIP-44 manage those secrets and paths. <strong>Public-key cryptography</strong> links a private key to a public key and permits digital signatures.</p>
+      <p><strong>Hashing</strong> maps data to a fixed-size digest; Keccak-256 is used here to make the address. A <strong>checksum</strong> adds information for detecting errors. <strong>Encoding</strong> changes representation, such as bits to mnemonic words or address bytes to hexadecimal characters. EIP-55 adds checksum information through letter case. None of these roles replaces the others.</p>
+    </section>
 
-                <h3>Statistical properties in the real pipeline</h3>
-                <p>
-                    For a good wallet, initial entropy should be unpredictable.
-                    BIP-39 words encode that entropy and include only a small
-                    error-detection checksum; the mnemonic is not designed to
-                    look like uniformly random text. A properly selected private
-                    scalar should be unpredictable in its valid range. For
-                    secp256k1, public points follow the curve's algebraic
-                    structure, so public-key coordinates are not arbitrary
-                    independent bits. Keccak-256 is designed to have digest
-                    outputs that look pseudorandom and to exhibit avalanche
-                    behavior: changing input bits should typically change about
-                    half the digest bits. EIP-55 letter casing reflects hash
-                    bits and is for typo detection, not secrecy. Statistical
-                    appearance alone does not prove cryptographic security.
-                </p>
-                <p class="note">
-                    <strong>Security reminder:</strong> never enter a real
-                    recovery phrase or private key into a homework demo or an
-                    unfamiliar website. This page does not derive real wallet
-                    keys and does not connect to a blockchain.
-                </p>
-            </section>
+    <section>
+      <h2>Statistical properties and limits</h2>
+      <ul>
+        <li>Good starting entropy and a correctly generated private scalar must be unpredictable. BIP-39 words include checksum bits, so their patterns are not independent random words. Derivation is deterministic: the same mnemonic, passphrase and path give the same keys.</li>
+        <li>Public points lie on a curve. Their x and y coordinates are related, even if private scalars are uniformly selected. On a suitable large curve, the relevant security question is whether recovering k from Q is hard.</li>
+        <li>Keccak-256 digests should have well-distributed bits and show an avalanche effect: a one-bit input change typically changes about half the digest bits. The address keeps only the last 160 bits. A small sample that looks balanced is not proof of hash security.</li>
+        <li>Nearby BIP-44 indices produce different derived keys and addresses, but they share one seed. A low visible correlation between index and address does not prove independence or secrecy.</li>
+        <li>EIP-55 case is derived from address hash bits. It provides error detection, not new address randomness, encryption or proof of ownership.</li>
+      </ul>
+    </section>
 
+    <section>
+      <h2>Historical context</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Year</th><th scope="col">Milestone</th></tr></thead>
+          <tbody>
+            <tr><td>1977</td><td>RSA public-key cryptography was described in an MIT memo.</td></tr>
+            <tr><td>2001–2002</td><td>SHA-2, including SHA-512: draft in 2001, final FIPS 180-2 standard in 2002.</td></tr>
+            <tr><td>2012</td><td>BIP-32 hierarchical deterministic wallets.</td></tr>
+            <tr><td>2013</td><td>BIP-39 mnemonic and seed generation.</td></tr>
+            <tr><td>2014</td><td>BIP-44 multi-account path convention.</td></tr>
+            <tr><td>2015</td><td>NIST standardized SHA-3, based on Keccak.</td></tr>
+            <tr><td>2016</td><td>EIP-55 mixed-case Ethereum addresses.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>SHA-2 versus Keccak/SHA-3:</strong> SHA-512 belongs to SHA-2. Keccak is the design selected for SHA-3, but Ethereum's Keccak-256 is not the standardized SHA3-256: their padding/domain-separation conventions differ, so their outputs differ.</p>
+    </section>
 
-            <section id="references">
-                <h2>References</h2>
-                <ul class="refs">
-                    <li>
-                        <a
-                            href="https://bitcoin.org/bip/32/"
-                            target="_blank"
-                            rel="noopener"
-                            >BIP-32 — Hierarchical Deterministic Wallets</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://bitcoin.org/bip/39/"
-                            target="_blank"
-                            rel="noopener"
-                            >BIP-39 — Mnemonic code for generating deterministic
-                            keys</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://bitcoin.org/bip/44/"
-                            target="_blank"
-                            rel="noopener"
-                            >BIP-44 — Multi-Account Hierarchy for Deterministic
-                            Wallets</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://ethereum.org/developers/docs/accounts/"
-                            target="_blank"
-                            rel="noopener"
-                            >Ethereum.org — Accounts and address derivation</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://eips.ethereum.org/EIPS/eip-55"
-                            target="_blank"
-                            rel="noopener"
-                            >EIP-55 — Mixed-case checksum address encoding</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://csrc.nist.gov/pubs/fips/202/final"
-                            target="_blank"
-                            rel="noopener"
-                            >NIST FIPS 202 — SHA-3 Standard (2015)</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://csrc.nist.gov/pubs/fips/180-2/final"
-                            target="_blank"
-                            rel="noopener"
-                            >NIST FIPS 180-2 — Secure Hash Standard, including
-                            SHA-512 (2002)</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            href="https://dspace.mit.edu/entities/publication/a2e09fea-6f05-48a5-9ce9-5073dfcde567"
-                            target="_blank"
-                            rel="noopener"
-                            >MIT archive — RSA technical memo (April 1977)</a
-                        >
-                    </li>
-                </ul>
-            </section>
-    <footer>
-      Educational demonstration · Statistics homeworks
-    </footer>
+    <section id="sources">
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki">BIP-39 — Mnemonic code for generating deterministic keys</a></li>
+        <li><a href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">BIP-32 — Hierarchical deterministic wallets</a></li>
+        <li><a href="https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki">BIP-44 — Multi-account hierarchy</a></li>
+        <li><a href="https://www.secg.org/sec2-v2.pdf">SEC 2 — secp256k1 curve parameters</a></li>
+        <li><a href="https://ethereum.org/developers/docs/accounts/">Ethereum.org — Accounts and address derivation</a></li>
+        <li><a href="https://eips.ethereum.org/EIPS/eip-55">EIP-55 — Mixed-case checksum addresses</a></li>
+        <li><a href="https://dspace.mit.edu/entities/publication/a2e09fea-6f05-48a5-9ce9-5073dfcde567">MIT — RSA technical memo (1977)</a></li>
+        <li><a href="https://csrc.nist.gov/pubs/fips/180-2/final">NIST FIPS 180-2 — SHA-2 and SHA-512</a></li>
+        <li><a href="https://csrc.nist.gov/pubs/fips/202/final">NIST FIPS 202 — SHA-3</a></li>
+        <li><a href="https://keccak.team/keccak_specs_summary.html">Keccak team — Specification summary</a></li>
+      </ul>
+    </section>
   </main>
 </body>
 </html>
