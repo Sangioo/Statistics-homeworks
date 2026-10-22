@@ -53,3 +53,28 @@ code { overflow-wrap: anywhere; }
   h1 { font-size: 1.7rem; }
   th, td { padding: 6px; }
 }
+
+/* Homework 2: shared visual language, with wider message and evidence controls. */
+nav { flex-wrap: wrap; }
+textarea, select { max-width: 100%; padding: 8px; border: 1px solid #9aaac0; border-radius: 6px; background: white; color: inherit; font: inherit; }
+textarea { display: block; width: 100%; margin: 8px 0 14px; resize: vertical; }
+textarea:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #f2ae41; outline-offset: 2px; }
+details { margin: 16px 0; padding: 12px 14px; border: 1px solid #d9e2ed; border-radius: 8px; }
+summary { cursor: pointer; color: #174e94; font-weight: 600; }
+details[open] summary { margin-bottom: 12px; }
+.technical-values { margin: 12px 0; }
+.technical-values dt { margin-top: 12px; font-weight: 700; }
+.technical-values dd { margin: 4px 0 12px; overflow-wrap: anywhere; }
+.message-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+pre { padding: 14px; overflow-x: auto; border-radius: 8px; background: #edf2f8; }
+#candidateRows td:last-child { min-width: 180px; max-width: 440px; overflow-wrap: anywhere; white-space: pre-wrap; }
+#candidateRows tr:first-child { background: #eaf2fc; }
+.frequency-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 20px; }
+.frequency-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 100px; align-items: center; gap: 8px; }
+.frequency-letter { font-weight: 600; }
+.frequency-track { display: grid; gap: 3px; }
+.frequency-bar { height: 6px; min-width: 0; border-radius: 2px; }
+.frequency-bar.training { background: #235da6; }
+.frequency-bar.candidate { background: #c17c10; }
+.frequency-values { font-size: .8rem; color: #53647a; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 620px) { .frequency-grid { grid-template-columns: 1fr; } }

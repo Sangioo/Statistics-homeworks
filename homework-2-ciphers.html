@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homework 2 — Encryption and Cryptanalysis</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="cipher-core.js" defer></script>
+  <script src="experiment-data.js" defer></script>
+  <script src="cipher-page.js" defer></script>
+</head>
+<body>
+  <main>
+    <nav aria-label="Main navigation"><a href="index.html">Home</a><a href="homework-1.html">Previous: curve arithmetic</a><a href="homework-2.html">Previous: Ethereum wallets</a></nav>
+    <header>
+      <h1>Homework 2: Encryption and cryptanalysis</h1>
+      <p>Encrypt the same message in two ways, then investigate what makes each key recoverable.</p>
+    </header>
+    <noscript><p class="answer">Enable JavaScript to run the demonstrations. The explanations and recorded experiment results below remain available without it.</p></noscript>
+
+    <section>
+      <h2>From the previous exercise to encryption</h2>
+      <p>The earlier pages introduced <strong>Q = dG</strong> and the role of secp256k1 in Ethereum. The interactive curve there was a smaller illustration, <strong>y² = x³ + 7 (mod 17)</strong>; it did not define a message-encryption protocol. Here we keep the same point-addition idea, use the actual secp256k1 curve, and explicitly define a toy hybrid encryption scheme.</p>
+      <p>Both schemes below encrypt <strong>“Meet me at the library at noon.”</strong> You can change the message and keys. The ECC recipient key is deliberately restricted to <strong>1 ≤ d ≤ 4096</strong>, only 12 bits of choice. This makes the attack practical even though the underlying curve is large.</p>
+      <details>
+        <summary>Curve parameters and implementation</summary>
+        <p>The equation is y² = x³ + 7 modulo p, where <code>p = 2²⁵⁶ − 2³² − 977</code>. The generator G has prime order n and the curve has cofactor 1. Coordinates below are hexadecimal, using the parameters in <a href="https://www.secg.org/sec2-v2.pdf">Standards for Efficient Cryptography 2 (SEC 2)</a>.</p>
+        <dl class="technical-values">
+          <dt>Gₓ</dt><dd><code>79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798</code></dd>
+          <dt>Gᵧ</dt><dd><code>483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8</code></dd>
+          <dt>n</dt><dd><code>fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141</code></dd>
+        </dl>
+        <p>Point addition uses modular inverses, as in the previous exercise; scalar multiplication uses double-and-add. The point at infinity is the identity. <a href="cipher-core.js">View the implementation</a>.</p>
+      </details>
+    </section>
+
+    <section>
+      <h2>1. Encrypt and decrypt the same message</h2>
+      <label for="message">Plaintext message</label>
+      <textarea id="message" rows="3" maxlength="4000">Meet me at the library at noon.</textarea>
+      <div class="graph-controls">
+        <label for="eccPrivate">ECC private key d</label><input id="eccPrivate" type="number" min="1" max="4096" value="1337" step="1">
+        <label for="caesarShift">Caesar shift s</label><input id="caesarShift" type="number" min="0" max="25" value="7" step="1">
+        <button id="encryptMessage" type="button">Encrypt and decrypt</button>
+      </div>
+      <p id="demoError" class="error" role="alert"></p>
+      <p id="demoStatus" class="small" role="status">Run the demonstration to inspect both ciphertexts.</p>
+      <div class="columns">
+        <div>
+          <h3>Caesar cipher</h3>
+          <p>Number the letters A = 0, …, Z = 25. Encrypt with <strong>c = (m + s) mod 26</strong> and decrypt with <strong>m = (c − s) mod 26</strong>. The same secret shift is used in both directions.</p>
+          <p>Only A–Z and a–z are shifted. Letter case, spaces, punctuation, numbers, and other Unicode characters remain unchanged. Thus the transformation is reversible, but those unchanged characters leak directly.</p>
+          <div class="answer"><strong>Ciphertext</strong><p id="caesarCipher" class="message-output">—</p><strong>Decrypted message</strong><p id="caesarPlain" class="message-output">—</p></div>
+        </div>
+        <div>
+          <h3>Toy secp256k1 hybrid</h3>
+          <ol>
+            <li>The recipient chooses private d and publishes <strong>Q = dG</strong>.</li>
+            <li>The sender draws fresh random <strong>r ∈ {1,…,n−1}</strong>, computes R = rG and shared point S = rQ.</li>
+            <li>HKDF-SHA-256 derives an AES-256 key from S. AES-GCM encrypts the UTF-8 message with a fresh 96-bit nonce and adds a 128-bit authentication tag.</li>
+            <li>Send <strong>(R, nonce, ciphertext, tag)</strong>. The recipient computes <strong>S = dR = drG = rQ</strong>, derives the same key, verifies the tag, and decrypts.</li>
+          </ol>
+          <div class="answer"><strong>Decrypted message</strong><p id="eccPlain" class="message-output">—</p><strong>Round trip</strong><p id="roundTrip">—</p></div>
+        </div>
+      </div>
+      <details>
+        <summary>Inspect the ECC public key and encrypted packet</summary>
+        <p>Points use 65-byte uncompressed encoding: 04 || x || y. HKDF uses the encoded S, a 32-byte zero salt, and the context label <code>statistics-homework-2/v1</code> followed by encoded R and Q as its info. AES-GCM also authenticates R || Q as associated data. The ciphertext field ends with the 16-byte tag.</p>
+        <dl class="technical-values">
+          <dt>Recipient public key Q</dt><dd><code id="publicPoint">—</code></dd>
+          <dt>Ephemeral public key R</dt><dd><code id="ephemeralPoint">—</code></dd>
+          <dt>Nonce (hex)</dt><dd><code id="nonce">—</code></dd>
+          <dt>Ciphertext + tag (hex)</dt><dd><code id="eccCipher">—</code></dd>
+        </dl>
+        <p>The sender needs Q, not d. Keep d, r, S, and the derived AES key secret. R and the nonce are public. The random r is full-sized even in this toy experiment; only the recipient's private key range is reduced.</p>
+      </details>
+      <p class="small">This is an educational construction, not a claim of compatibility with a standard ECIES profile. The BigInt curve code is not constant-time or production-audited. SHA-256, HKDF, and AES-GCM use the browser's Web Crypto API; use HTTPS or localhost if encryption is unavailable.</p>
+    </section>
+
+    <section>
+      <h2>2. What the ciphertext reveals</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>Encryption, keys, and statistical structure</caption>
+          <thead><tr><th scope="col">Property</th><th scope="col">Caesar</th><th scope="col">Toy ECC hybrid</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Key roles</th><td>One shared secret shift encrypts and decrypts.</td><td>Public Q encrypts; private d decrypts. ECDH establishes a shared key for symmetric AES-GCM.</td></tr>
+            <tr><th scope="row">Key space</th><td>26 shifts, including identity shift 0; log₂26 ≈ 4.70 bits if uniform.</td><td>4096 possible recipient keys: 12 bits if uniform. Full secp256k1 permits n − 1 private scalars, approximately 2²⁵⁶.</td></tr>
+            <tr><th scope="row">Repeated encryption</th><td>The same message and key always give the same ciphertext.</td><td>Fresh r and nonce make repeated encryptions differ with overwhelming probability.</td></tr>
+            <tr><th scope="row">Letter patterns</th><td>Frequency counts are rotated. Repetitions, word lengths, and equality patterns survive.</td><td>Message bytes are encrypted; there is no fixed letter substitution to align with English frequencies. Public curve points still have mathematical structure.</td></tr>
+            <tr><th scope="row">Statistical limits</th><td>Empirical letter entropy and index of coincidence are unchanged by relabelling letters.</td><td>A short, random-looking ciphertext proves nothing about security. Its length still reveals UTF-8 byte length plus a 16-byte tag.</td></tr>
+            <tr><th scope="row">Integrity</th><td>Changing a ciphertext letter silently changes the plaintext.</td><td>AES-GCM detects alteration under the derived key. It does not prove who sent the message: anyone with Q can encrypt a new one.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Both methods use a key-dependent reversible procedure. Their attack surfaces differ: Caesar exposes language structure, whereas this ECC example is broken by the tiny set of possible recipient keys, regardless of what the message says.</p>
+      <details>
+        <summary>Why Caesar preserves its statistical signature</summary>
+        <p>If fⱼ is the observed plaintext fraction for letter j, encryption merely permutes the fractions. Therefore <strong>H = −Σ fⱼ log₂ fⱼ</strong> and <strong>IC = Σ cⱼ(cⱼ − 1) / [L(L − 1)]</strong> remain the same (IC needs L ≥ 2). These are descriptive letter statistics, not the uncertainty of the entire message or the secret key. Neither statistic alone identifies the shift; matching the labelled frequencies to a language model does.</p>
+      </details>
+    </section>
+
+    <section>
+      <h2>3. Recover a Caesar key from language statistics</h2>
+      <p>Train on the bundled <a href="data/training-english.txt">English corpus</a>: <strong>11,761 letters</strong> from original passages about everyday life. Keep only A–Z, fold case, and count each letter. Add-one smoothing gives <strong>pⱼ = (countⱼ + 1) / (T + 26)</strong>, avoiding zero expected counts.</p>
+      <ol>
+        <li>For each candidate shift s = 0,…,25, undo the shift and count the resulting letters Oⱼ.</li>
+        <li>For ciphertext length L in letters, compute expected counts Eⱼ = Lpⱼ.</li>
+        <li>Score the candidate with <strong>χ²(s) = Σ (Oⱼ − Eⱼ)² / Eⱼ</strong>.</li>
+        <li>Choose the shift with the smallest score, then inspect the candidate plaintext.</li>
+      </ol>
+      <p>This uses a chi-square distance to rank candidates, not a calibrated significance test. In particular, tiny expected counts in short samples make a formal chi-square interpretation inappropriate. Ties are resolved by taking the smaller shift.</p>
+      <label for="attackCipher">Ciphertext to analyse</label>
+      <textarea id="attackCipher" rows="3" maxlength="10000">Tlla tl ha aol spiyhyf ha uvvu.</textarea>
+      <div class="graph-controls">
+        <label for="scoreMethod">Scoring method</label>
+        <select id="scoreMethod"><option value="chi">Letter frequencies (χ²)</option><option value="bigram">Bigram log likelihood</option></select>
+        <button id="analyseCipher" type="button">Recover Caesar key</button>
+        <button id="useCipher" type="button" disabled>Use ciphertext from section 1</button>
+      </div>
+      <p id="analysisError" class="error" role="alert"></p>
+      <p id="analysisResult" class="answer" role="status">Choose a method to rank the 26 possible keys.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>All 26 candidates, best score first; lower is better. Plaintext previews show up to 160 characters.</caption>
+          <thead><tr><th scope="col">Shift</th><th scope="col">Score</th><th scope="col">Candidate plaintext</th></tr></thead>
+          <tbody id="candidateRows"></tbody>
+        </table>
+      </div>
+      <h3>Compare the best candidate with the training corpus</h3>
+      <p class="small">Each pair of bars shows a letter's percentage: blue = training corpus, orange = best candidate. Exact percentages are printed beside the bars.</p>
+      <div id="frequencyBars" class="frequency-grid" aria-label="Training and candidate letter frequencies"></div>
+      <details>
+        <summary>Alternative approaches and their costs</summary>
+        <p><strong>Exhaustive search</strong> produces all 26 plaintexts in O(26L) work. It guarantees the correct one is in the list; recognising it still requires language evidence, known plaintext, or human judgement. Statistical scoring automates that choice, so exhaustive search and frequency analysis are complementary.</p>
+        <p><strong>Most frequent letter:</strong> align the most common ciphertext letter with the most common training letter (E here). This throws away the other 25 counts and is fragile on short passages. Count ties use alphabetic order in this implementation.</p>
+        <p><strong>Bigrams:</strong> count all adjacent letter pairs after removing nonletters, including pairs across word boundaries. Use add-one smoothing over 26² = 676 pairs: p(ab) = (count(ab) + 1)/(T − 1 + 676). Minimise −Σ log p(ab) for each candidate. It captures some letter order and often helps on short texts. It is a scoring heuristic using overlapping pairs, not a calibrated probability of the whole message. With fewer than two letters all bigram scores tie.</p>
+        <p>Once the letter counts are computed, chi-square ranking needs only 26 × 26 terms, for O(L + 26²) work. Bigram scoring here scans each candidate in O(26L). Larger n-grams may capture more context but need more training text and smoothing.</p>
+      </details>
+    </section>
+
+    <section>
+      <h2>4. Does ciphertext length matter?</h2>
+      <p>Test on a <a href="data/test-english.txt">separate set of original English passages</a> containing <strong>5,323 letters</strong>. For each length below, select 100 contiguous windows with replacement and choose a shift uniformly from 0,…,25 using a reproducible pseudorandom generator (seed <strong>20261022</strong>). Every method receives the same window and key. A success means the top-ranked key equals the actual encryption key.</p>
+      <div class="graph-controls"><button id="runExperiments" type="button">Re-run the 800 trials</button><a href="data/results.json" download>Download recorded results</a></div>
+      <p id="experimentStatus" class="small" role="status">Recorded results from the bundled implementation; each cell is successes / 100 (also a percentage).</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Key recovery on held-out text; length counts A–Z letters only</caption>
+          <thead><tr><th scope="col">Letters</th><th scope="col">Most frequent letter</th><th scope="col">χ² ranking</th><th scope="col">Bigram ranking</th></tr></thead>
+          <tbody id="experimentRows">
+            <tr><th scope="row">5</th><td>21 / 100</td><td>58 / 100</td><td>76 / 100</td></tr>
+            <tr><th scope="row">10</th><td>27 / 100</td><td>85 / 100</td><td>97 / 100</td></tr>
+            <tr><th scope="row">20</th><td>46 / 100</td><td>96 / 100</td><td>100 / 100</td></tr>
+            <tr><th scope="row">50</th><td>59 / 100</td><td>100 / 100</td><td>100 / 100</td></tr>
+            <tr><th scope="row">100</th><td>77 / 100</td><td>100 / 100</td><td>100 / 100</td></tr>
+            <tr><th scope="row">250</th><td>98 / 100</td><td>100 / 100</td><td>100 / 100</td></tr>
+            <tr><th scope="row">500</th><td>100 / 100</td><td>100 / 100</td><td>100 / 100</td></tr>
+            <tr><th scope="row">1000</th><td>100 / 100</td><td>100 / 100</td><td>100 / 100</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Observed:</strong> at 5 letters, chi-square recovered 58 keys and bigrams recovered 76. By 50 letters both recovered every key in this run, while the one-letter heuristic recovered 59. Longer samples tend to resemble the reference distribution more closely, but success need not increase monotonically on every dataset.</p>
+      <p><strong>Limitations:</strong> these are modest, purpose-written corpora in a similar register, not a representative benchmark of English. Sample windows can overlap, so the trials are not independent evidence and 100/100 is not a universal success guarantee. The pseudorandom generator is for repeatability, not secure key generation. Names, abbreviations, specialised vocabulary, a different language, or deliberately unusual letter distributions can defeat the ranking even in longer texts.</p>
+      <p>A ciphertext of one letter may plausibly decode to “A” or “I”; statistics cannot eliminate that ambiguity. A repeated letter or uniformly distributed random text offers little reliable English-language evidence. Preserve several candidates when the evidence is weak, and treat the score gap as a comparison, not a probability of correctness.</p>
+    </section>
+
+    <section>
+      <h2>5. Attack the restricted ECC key space</h2>
+      <p>The attacker knows <strong>G, Q, the bound 4096, and the encrypted packet</strong>. Start at P = O; repeatedly add G. At step j, P = jG. Compare both coordinates with Q. When they match, j is the recipient's private key. Decrypt using jR and the same key derivation. This search does not read the private-key input or use English letter frequencies.</p>
+      <pre><code>P = O
+for j = 1 to 4096:
+    P = P + G
+    if P == Q:
+        return j</code></pre>
+      <div class="graph-controls"><button id="attackEcc" type="button" disabled>Recover private key and decrypt</button></div>
+      <p id="eccAttackStatus" class="answer" role="status">First encrypt a message in section 1.</p>
+      <div id="eccAttackDetails" hidden>
+        <p><strong>Recovered private key:</strong> <span id="recoveredKey"></span><br><strong>Candidates checked:</strong> <span id="attackCount"></span><br><strong>Elapsed time:</strong> <span id="attackTime"></span></p>
+        <p class="answer"><strong>Message decrypted by the attacker</strong><br><span id="attackerPlain" class="message-output"></span></p>
+      </div>
+      <p>There are at most <strong>4096 candidate checks</strong>, and an average of <strong>(4096 + 1)/2 = 2048.5</strong> for a uniformly chosen key. Each next candidate needs one point addition, rather than a fresh scalar multiplication. Matching a full public point identifies the key exactly within this range: distinct scalars below n give distinct points. The amount or language of ciphertext is irrelevant to recovering d.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Why the two attacks work</caption>
+          <thead><tr><th scope="col">Question</th><th scope="col">Caesar statistical attack</th><th scope="col">ECC bounded search</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Evidence</th><td>Ciphertext and an approximate language distribution.</td><td>Public point Q and the known private-key range.</td></tr>
+            <tr><th scope="row">Decision</th><td>Rank plausible messages; the best guess can be wrong.</td><td>Test exact equality jG = Q; no language ambiguity.</td></tr>
+            <tr><th scope="row">More ciphertext</th><td>Usually improves estimates for ordinary language.</td><td>Does not reduce the key search when Q is already known.</td></tr>
+            <tr><th scope="row">Cause of failure</th><td>Tiny key space and a substitution that preserves language patterns.</td><td>Tiny private-key space despite a large, otherwise standard curve.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Why this does not scale:</strong> a properly sampled secp256k1 private key has approximately 2²⁵⁶ possibilities. Linear enumeration is infeasible. Generic classical discrete-logarithm methods such as Pollard rho take roughly √n ≈ 2¹²⁸ group operations, rather than 2²⁵⁶. Thus a 256-bit scalar is associated with roughly 128-bit generic classical security, assuming a sound protocol and implementation.</p>
+      <details>
+        <summary>Alternative attacks and protocol weaknesses</summary>
+        <p>Baby-step giant-step uses roughly O(√B) work and memory for a range of B possible keys; Pollard kangaroo targets a known interval with expected work of that order and much less storage. At B = 4096, √B = 64; this is an order-of-growth comparison, not a promise of exactly 64 operations. They are unnecessary for this tiny demonstration but show why interval restrictions are especially dangerous.</p>
+        <p>If the sender also chose r from a tiny range, recovering r from R would reveal S = rQ even when the recipient's d was strong. This implementation deliberately samples r over the full group range. Restricting d is sufficient to break it.</p>
+        <p>Other weaknesses are separate from the private-key range: unauthenticated XOR encryption permits tampering; reusing a keystream leaks relationships between messages; reusing an AES-GCM nonce with the same key is unsafe; accepting invalid curve points can expose secrets in some protocols. Here points are checked, R and Q are bound into derivation and authentication, fresh randomness is used, and a GCM tag is verified. Nevertheless, this teaching implementation has no constant-time guarantee, sender authentication, audited protocol design, or secure key storage. Strengthening the key range alone would not certify it as production software.</p>
+      </details>
+    </section>
+
+    <section>
+      <h2>Conclusion</h2>
+      <p>Caesar encryption rotates the alphabet without hiding its structure. A corpus-derived model can therefore rank its 26 keys, with longer, ordinary-language samples generally providing better evidence. In the ECC hybrid, scalar multiplication lets sender and recipient derive the same encryption key in different ways; letter-frequency matching no longer applies. Yet restricting the private scalar to 4096 choices makes exact recovery easy. A large curve cannot compensate for a small secret.</p>
+    </section>
+    <section>
+      <h2>Sources and reproducibility</h2>
+      <ul>
+        <li><a href="https://www.secg.org/sec2-v2.pdf">Standards for Efficient Cryptography 2 (SEC 2)</a> — secp256k1 parameters, section 2.4.1.</li>
+        <li><a href="https://www.rfc-editor.org/rfc/rfc5869">RFC 5869</a> — HKDF key derivation.</li>
+        <li><a href="https://www.w3.org/TR/2017/REC-WebCryptoAPI-20170126/">W3C Web Cryptography API</a> — browser HKDF and AES-GCM operations.</li>
+        <li><a href="https://csrc.nist.gov/pubs/sp/800/38/d/final">NIST SP 800-38D</a> — GCM authenticated encryption.</li>
+        <li><a href="https://cacr.uwaterloo.ca/hac/about/chap3.pdf">Handbook of Applied Cryptography, chapter 3</a> — generic discrete-logarithm algorithms.</li>
+      </ul>
+      <p>The two English corpora were written for this exercise; no external text downloads are needed. <a href="cipher-core.js">Algorithms</a> · <a href="build-experiments.js">Experiment builder</a> · <a href="tests/ciphers.test.js">Verification tests</a> · <a href="README.md">Run instructions</a>. Rebuild with <code>node build-experiments.js</code>; verify with <code>node --test tests/ciphers.test.js</code>.</p>
+    </section>
+  </main>
+</body>
+</html>

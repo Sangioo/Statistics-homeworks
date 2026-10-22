@@ -1,0 +1,65 @@
+{
+  "seed": 20261022,
+  "trainingLetters": 11761,
+  "testLetters": 5323,
+  "trialsPerLength": 100,
+  "sampling": "Contiguous windows, with replacement; all methods share each window and key.",
+  "results": [
+    {
+      "length": 5,
+      "trials": 100,
+      "peak": 21,
+      "chi": 58,
+      "bigram": 76
+    },
+    {
+      "length": 10,
+      "trials": 100,
+      "peak": 27,
+      "chi": 85,
+      "bigram": 97
+    },
+    {
+      "length": 20,
+      "trials": 100,
+      "peak": 46,
+      "chi": 96,
+      "bigram": 100
+    },
+    {
+      "length": 50,
+      "trials": 100,
+      "peak": 59,
+      "chi": 100,
+      "bigram": 100
+    },
+    {
+      "length": 100,
+      "trials": 100,
+      "peak": 77,
+      "chi": 100,
+      "bigram": 100
+    },
+    {
+      "length": 250,
+      "trials": 100,
+      "peak": 98,
+      "chi": 100,
+      "bigram": 100
+    },
+    {
+      "length": 500,
+      "trials": 100,
+      "peak": 100,
+      "chi": 100,
+      "bigram": 100
+    },
+    {
+      "length": 1000,
+      "trials": 100,
+      "peak": 100,
+      "chi": 100,
+      "bigram": 100
+    }
+  ]
+}
