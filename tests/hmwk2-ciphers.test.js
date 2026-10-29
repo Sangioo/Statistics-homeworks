@@ -4,7 +4,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const C = require('../cipher-core.js');
+const C = require('../hmwk2-cipher-core.js');
 const read = filename => fs.readFileSync(path.join(__dirname, '..', filename), 'utf8');
 
 test('Caesar known vector, all 26 shifts, wraparound, case and Unicode preservation', () => {
@@ -62,8 +62,8 @@ test('bounded public-key search recovers edge keys and decrypts without private-
 });
 
 test('statistical recovery handles all shifts and rejects text without Latin letters', () => {
-  const model = C.train(read('data/training-english.txt'));
-  const passage = read('data/test-english.txt').slice(0, 700);
+  const model = C.train(read('data/hmwk2-training-english.txt'));
+  const passage = read('data/hmwk2-test-english.txt').slice(0, 700);
   for (let key = 0; key < 26; key++) {
     const cipher = C.caesar(passage, key);
     assert.equal(C.rank(cipher, model)[0].key, key);
@@ -76,15 +76,15 @@ test('statistical recovery handles all shifts and rejects text without Latin let
 });
 
 test('recorded results, browser data and static HTML reproduce the bundled corpora', () => {
-  const model = C.train(read('data/training-english.txt'));
-  const testing = C.letters(read('data/test-english.txt'));
+  const model = C.train(read('data/hmwk2-training-english.txt'));
+  const testing = C.letters(read('data/hmwk2-test-english.txt'));
   const results = C.experiment(testing, model);
-  const recorded = JSON.parse(read('data/results.json'));
+  const recorded = JSON.parse(read('data/hmwk2-results.json'));
   assert.deepEqual(results, recorded.results);
   assert.equal(model.size, recorded.trainingLetters);
   assert.equal(testing.length, recorded.testLetters);
   const context = {window: {}};
-  vm.runInNewContext(read('experiment-data.js'), context);
+  vm.runInNewContext(read('hmwk2-experiment-data.js'), context);
   assert.equal(JSON.stringify(context.window.ExperimentData), JSON.stringify({model, testLetters: testing, results}));
   const html = read('homework-2-ciphers.html');
   for (const r of results) assert.ok(html.includes(`<tr><th scope="row">${r.length}</th><td>${r.peak} / 100</td><td>${r.chi} / 100</td><td>${r.bigram} / 100</td></tr>`));

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Homework 2 — Encryption and Cryptanalysis</title>
   <link rel="stylesheet" href="style.css">
-  <script src="cipher-core.js" defer></script>
-  <script src="experiment-data.js" defer></script>
-  <script src="cipher-page.js" defer></script>
+  <script src="hmwk2-cipher-core.js" defer></script>
+  <script src="hmwk2-experiment-data.js" defer></script>
+  <script src="hmwk2-cipher-page.js" defer></script>
 </head>
 <body>
   <main>
@@ -30,7 +30,7 @@
           <dt>Gᵧ</dt><dd><code>483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8</code></dd>
           <dt>n</dt><dd><code>fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141</code></dd>
         </dl>
-        <p>Point addition uses modular inverses, as in the previous exercise; scalar multiplication uses double-and-add. The point at infinity is the identity. <a href="cipher-core.js">View the implementation</a>.</p>
+        <p>Point addition uses modular inverses, as in the previous exercise; scalar multiplication uses double-and-add. The point at infinity is the identity. <a href="hmwk2-cipher-core.js">View the implementation</a>.</p>
       </details>
     </section>
 
@@ -102,7 +102,7 @@
 
     <section>
       <h2>3. Recover a Caesar key from language statistics</h2>
-      <p>Train on the bundled <a href="data/training-english.txt">English corpus</a>: <strong>11,761 letters</strong> from original passages about everyday life. Keep only A–Z, fold case, and count each letter. Add-one smoothing gives <strong>pⱼ = (countⱼ + 1) / (T + 26)</strong>, avoiding zero expected counts.</p>
+      <p>Train on the bundled <a href="data/hmwk2-training-english.txt">English corpus</a>: <strong>11,761 letters</strong> from original passages about everyday life. Keep only A–Z, fold case, and count each letter. Add-one smoothing gives <strong>pⱼ = (countⱼ + 1) / (T + 26)</strong>, avoiding zero expected counts.</p>
       <ol>
         <li>For each candidate shift s = 0,…,25, undo the shift and count the resulting letters Oⱼ.</li>
         <li>For ciphertext length L in letters, compute expected counts Eⱼ = Lpⱼ.</li>
@@ -141,8 +141,8 @@
 
     <section>
       <h2>4. Does ciphertext length matter?</h2>
-      <p>Test on a <a href="data/test-english.txt">separate set of original English passages</a> containing <strong>5,323 letters</strong>. For each length below, select 100 contiguous windows with replacement and choose a shift uniformly from 0,…,25 using a reproducible pseudorandom generator (seed <strong>20261022</strong>). Every method receives the same window and key. A success means the top-ranked key equals the actual encryption key.</p>
-      <div class="graph-controls"><button id="runExperiments" type="button">Re-run the 800 trials</button><a href="data/results.json" download>Download recorded results</a></div>
+      <p>Test on a <a href="data/hmwk2-test-english.txt">separate set of original English passages</a> containing <strong>5,323 letters</strong>. For each length below, select 100 contiguous windows with replacement and choose a shift uniformly from 0,…,25 using a reproducible pseudorandom generator (seed <strong>20261022</strong>). Every method receives the same window and key. A success means the top-ranked key equals the actual encryption key.</p>
+      <div class="graph-controls"><button id="runExperiments" type="button">Re-run the 800 trials</button><a href="data/hmwk2-results.json" download>Download recorded results</a></div>
       <p id="experimentStatus" class="small" role="status">Recorded results from the bundled implementation; each cell is successes / 100 (also a percentage).</p>
       <div class="table-wrap">
         <table>
@@ -214,7 +214,7 @@ for j = 1 to 4096:
         <li><a href="https://csrc.nist.gov/pubs/sp/800/38/d/final">NIST SP 800-38D</a> — GCM authenticated encryption.</li>
         <li><a href="https://cacr.uwaterloo.ca/hac/about/chap3.pdf">Handbook of Applied Cryptography, chapter 3</a> — generic discrete-logarithm algorithms.</li>
       </ul>
-      <p>The two English corpora were written for this exercise; no external text downloads are needed. <a href="cipher-core.js">Algorithms</a> · <a href="build-experiments.js">Experiment builder</a> · <a href="tests/ciphers.test.js">Verification tests</a> · <a href="README.md">Run instructions</a>. Rebuild with <code>node build-experiments.js</code>; verify with <code>node --test tests/ciphers.test.js</code>.</p>
+      <p>The two English corpora were written for this exercise; no external text downloads are needed. <a href="hmwk2-cipher-core.js">Algorithms</a> · <a href="hmwk2-build-experiments.js">Experiment builder</a> · <a href="tests/hmwk2-ciphers.test.js">Verification tests</a> · <a href="README.md">Run instructions</a>. Rebuild with <code>node hmwk2-build-experiments.js</code>; verify with <code>node --test tests/hmwk2-ciphers.test.js</code>.</p>
     </section>
   </main>
 </body>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homework 3 — Penetration, LLN and CLT</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="hmwk3-penetration-core.js" defer></script>
+  <!-- Bump the controller revision when its expected controls change. -->
+  <script src="hmwk3-penetration-page.js?v=20261029-2" defer></script>
+</head>
+<body>
+  <main>
+    <nav><a href="index.html">Home</a><a href="homework-1.html">Curve arithmetic</a><a href="homework-2.html">Ethereum wallets</a><a href="homework-2-ciphers.html">Homework 2: Ciphers</a></nav>
+    <header>
+      <h1>Homework 3: Penetration as a stochastic process</h1>
+      <p>How sums, averages and square-root scaling behave as the number of systems grows.</p>
+    </header>
+
+    <section>
+      <h2>Model and experimental design</h2>
+      <p>There are <strong>n systems</strong> and <strong>m attackers</strong>. Attacker j encounters one system at each step i, receiving score X<sub>j,i</sub>. For each attacker, the increments are independent and identically distributed; we also assume independence between attackers. Thus each attacker is one independent sample trajectory S<sub>j,k</sub> = ∑<sub>i=1</sub><sup>k</sup> X<sub>j,i</sub>, starting at S<sub>j,0</sub> = 0. The endpoint distribution at n is estimated from all m attackers.</p>
+      <p><strong>Bernoulli:</strong> X ∈ {0,1}, with P(X = 1) = p. A 1 denotes a successful penetration and a 0 a failed attempt. The cumulative score counts successes. <strong>Rademacher:</strong> X ∈ {−1,+1}, each with probability 1/2. This is an abstract signed score: a positive step represents progress and a negative step a setback. It is a symmetric random walk, not a count of compromised systems.</p>
+      <p>Use increasing n = 10, 100, 1,000, 10,000 and compare m = 100, 1,000, 5,000. A larger m improves the estimate of a distribution; a larger n changes the distribution itself. The recorded experiment uses p = 0.3 and ε = 0.1. Within each model, checkpoints share the same paths and attacker groups are nested, so these comparisons are deliberately paired, not independent experiments. Each interactive run generates a fresh sample.</p>
+    </section>
+
+    <section>
+      <h2>Interactive simulation</h2>
+      <form id="simulationForm">
+        <div class="simulation-controls">
+          <div><label for="model">Score model</label><select id="model"><option value="bernoulli">Bernoulli {0, 1}</option><option value="rademacher">Rademacher {−1, +1}</option></select></div>
+          <div><label for="systems">Systems n</label><input id="systems" type="number" min="1" max="10000" step="1" value="1000" required></div>
+          <div><label for="attackers">Attackers m</label><input id="attackers" type="number" min="2" max="5000" step="1" value="2000" required></div>
+          <div><label for="probability">Success probability p</label><input id="probability" type="number" min="0" max="1" step="any" value="0.3" required></div>
+        </div>
+        <button id="runSimulation" type="submit">Run simulation</button>
+      </form>
+      <p id="simulationError" class="error" role="alert"></p>
+      <p id="simulationStatus" role="status" aria-live="polite">The default simulation runs when the page opens.</p>
+      <noscript><p class="answer">Enable JavaScript for interactive charts. The theory, attacker comparison and conclusions below remain available without it.</p></noscript>
+      <div id="simulationResults" hidden>
+        <p id="simulationSummary" class="answer"></p>
+        <h3>Sample trajectories</h3>
+        <p>Each color follows the same attacker in all three plots. For legibility, only the first 12 attackers are drawn; statistics and distributions use all m. For long paths, at most about 500 time points are drawn. The dashed orange line is the theoretical mean. At time k, the divisors are k and √k; averages and normalized scores start at k = 1.</p>
+        <div class="simulation-plots">
+          <figure><figcaption>Total score S<sub>k</sub></figcaption><svg id="totalPath" viewBox="0 0 760 260" role="img" aria-label="Total score trajectories"></svg></figure>
+          <figure><figcaption>Average score S<sub>k</sub>/k</figcaption><svg id="averagePath" viewBox="0 0 760 260" role="img" aria-label="Average score trajectories"></svg></figure>
+          <figure><figcaption>Normalized total S<sub>k</sub>/√k</figcaption><svg id="normalizedPath" viewBox="0 0 760 260" role="img" aria-label="Normalized total trajectories"></svg></figure>
+        </div>
+        <h3>Endpoint distributions across attackers</h3>
+        <label for="checkpoint">Systems at endpoint</label><select id="checkpoint"></select>
+        <p>Switch between checkpoints to compare increasing n on the same simulated paths. Bars show probability density (count divided by m and bin width), so their total area is 1. Axes rescale to fit the data; use the variance table to compare spread. All three distributions are rescalings of the same endpoints. Small-n distributions are discrete, and binning can produce gaps.</p>
+        <div class="simulation-plots">
+          <figure><figcaption>Total score S<sub>n</sub></figcaption><svg id="totalHistogram" viewBox="0 0 760 260" role="img" aria-label="Total score endpoint distribution"></svg></figure>
+          <figure><figcaption>Average score S<sub>n</sub>/n</figcaption><svg id="averageHistogram" viewBox="0 0 760 260" role="img" aria-label="Average score endpoint distribution"></svg></figure>
+          <figure><figcaption>Normalized total S<sub>n</sub>/√n</figcaption><svg id="normalizedHistogram" viewBox="0 0 760 260" role="img" aria-label="Normalized total endpoint distribution"></svg></figure>
+        </div>
+        <p id="normalComparison" class="answer"></p>
+        <h3>Means and variances as n increases</h3>
+        <p>Each cell gives <strong>empirical / theoretical</strong> values. Empirical variances use the sample denominator m − 1.</p>
+        <div class="table-wrap"><table>
+          <caption>All m attackers at each checkpoint</caption>
+          <thead><tr><th scope="col">n</th><th scope="col">Mean Sₙ</th><th scope="col">Var Sₙ</th><th scope="col">Mean Sₙ/n</th><th scope="col">Var Sₙ/n</th><th scope="col">Mean Sₙ/√n</th><th scope="col">Var Sₙ/√n</th></tr></thead>
+          <tbody id="momentRows"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Law of Large Numbers: convergence in probability</h2>
+      <p>Let μ = E[X] and σ² = Var(X). For Bernoulli increments, μ = p and σ² = p(1 − p); for Rademacher increments, μ = 0 and σ² = 1.</p>
+      <p>For every fixed ε &gt; 0, Chebyshev’s inequality gives</p>
+      <p class="answer">P(|Sₙ/n − μ| &gt; ε) ≤ σ²/(nε²) → 0 as n → ∞.<br>Therefore Sₙ/n → p in probability for Bernoulli, and Sₙ/n → 0 in probability for Rademacher.</p>
+      <p>This proves the requested weak Law of Large Numbers. The experiment estimates this probability by the fraction of m attackers whose endpoint average lies outside μ ± ε. For ε = 0.1 and p = 0.3, the bound is min(1,21/n); for Rademacher it is min(1,100/n). These bounds can be loose. Zero observed deviations in a finite sample does not mean the true probability is zero.</p>
+      <p>Convergence in probability is a statement about the chance of a deviation at a large n. It does not say that every path approaches its mean monotonically, nor that every attacker must lie inside the tolerance at every later step. Finite simulations illustrate the result; the inequality establishes it.</p>
+    </section>
+
+    <section>
+      <h2>Central Limit Theorem: a stable fluctuation scale</h2>
+      <p>For independent, identically distributed increments with 0 &lt; σ² &lt; ∞, the CLT states (Sₙ − nμ)/(σ√n) ⇒ N(0,1), where ⇒ denotes convergence in distribution. Thus, in the symmetric Rademacher case:</p>
+      <p class="answer">Sₙ/√n ⇒ N(0,1), since μ = 0 and σ² = 1.<br>Its mean is exactly 0 and its variance is exactly 1 for every n.</p>
+      <p>The normalized histogram becomes approximately bell-shaped as the lattice spacing 2/√n shrinks. At finite n it is still discrete. Convergence in distribution does not mean individual normalized trajectories settle down to zero: their fluctuations remain of order one. The raw total has growing spread and no finite limiting distribution on ℝ.</p>
+      <p><strong>The Bernoulli distinction:</strong> Sₙ/√n has mean p√n and variance p(1 − p). For any fixed p &gt; 0 it tends to +∞ in probability, because Sₙ/n → p. Constant variance does not imply a stable distribution when the mean moves. For 0 &lt; p &lt; 1, the correct standardization is <strong>(Sₙ − np)/√(np(1 − p)) ⇒ N(0,1)</strong>; centering alone on the √n scale gives (Sₙ − np)/√n ⇒ N(0,p(1 − p)). At p = 0 or 1 the process is deterministic and the nondegenerate CLT does not apply.</p>
+    </section>
+
+    <section>
+      <h2>Interpretation for systems and attackers</h2>
+      <p>Define the aggregate score across all attackers as A<sub>n,m</sub> = ∑<sub>j=1</sub><sup>m</sup>S<sub>j,n</sub>. Independence between attackers implies <strong>E[A<sub>n,m</sub>] = mnμ</strong> and <strong>Var(A<sub>n,m</sub>) = mnσ²</strong>. The overall score per attempt A<sub>n,m</sub>/(mn) has mean μ and variance σ²/(mn).</p>
+      <p>The table below holds n = 1,000 fixed and compares m = 100, 1,000 and 5,000 attackers for both models, with p = 0.3 for Bernoulli. It uses the first m attackers from one recorded experiment, so the groups are nested. These fixed results illustrate the interpretation and are separate from the fresh samples generated by the interactive simulation.</p>
+      <div class="table-wrap"><table>
+        <caption>Fixed comparison: n = 1,000 systems; Bernoulli p = 0.3; m = 100, 1,000 and 5,000 attackers</caption>
+        <thead><tr><th scope="col">Model</th><th scope="col">m</th><th scope="col">Empirical mean Sₙ/n</th><th scope="col">Theoretical standard error</th><th scope="col">Aggregate score Aₙ,ₘ</th></tr></thead>
+        <tbody id="recordedAttackers">
+          <tr><th scope="row">Bernoulli</th><td>100</td><td>0.30251</td><td>0.0014491</td><td>30251</td></tr>
+          <tr><th scope="row">Bernoulli</th><td>1000</td><td>0.30016</td><td>0.00045826</td><td>300161</td></tr>
+          <tr><th scope="row">Bernoulli</th><td>5000</td><td>0.30008</td><td>0.00020494</td><td>1500376</td></tr>
+          <tr><th scope="row">Rademacher</th><td>100</td><td>0.00236</td><td>0.0031623</td><td>236</td></tr>
+          <tr><th scope="row">Rademacher</th><td>1000</td><td>0.000736</td><td>0.001</td><td>736</td></tr>
+          <tr><th scope="row">Rademacher</th><td>5000</td><td>-0.0001612</td><td>0.00044721</td><td>-806</td></tr>
+        </tbody>
+      </table></div>
+      <p>The empirical mean is the average of the m attackers’ scores Sₙ/n, equal to A<sub>n,m</sub>/(mn). Its theoretical standard error is σ/√(nm): increasing m from 100 to 5,000 reduces this error by √50 ≈ 7.07, without changing a single attacker’s variance σ²/n. The table’s means remain close to 0.3 for Bernoulli and zero for Rademacher.</p>
+      <p>For Bernoulli, the expected total number of successful attacker-system attempts is mnp, with standard deviation √(mnp(1 − p)). More systems give each attacker more opportunities; more attackers increase the aggregate expected score linearly. In the table, the observed aggregate rises from 30,251 to 1,500,376 as m grows from 100 to 5,000, close to the expected totals of 30,000 and 1,500,000. The aggregate counts repeated successes against the same system separately, so it is not the number of distinct penetrated systems and can exceed n. The expected number of distinct penetrated systems, under these independence assumptions, is n[1 − (1 − p)ᵐ].</p>
+      <p>For Rademacher, the aggregate expected score remains zero, even with more attackers, but its variance is mn and its typical magnitude is of order √(mn). Positive and negative contributions cancel on average; there is no increasing expected penetration count. The observed aggregates of 236, 736 and −806 illustrate this: adding attackers can change the sign rather than steadily increasing the score. A larger m makes the displayed endpoint histogram more stable and increases aggregate fluctuations, without changing the theoretical distribution of a single attacker’s path.</p>
+    </section>
+  </main>
+</body>
+</html>

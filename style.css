@@ -78,3 +78,16 @@ pre { padding: 14px; overflow-x: auto; border-radius: 8px; background: #edf2f8; 
 .frequency-bar.candidate { background: #c17c10; }
 .frequency-values { font-size: .8rem; color: #53647a; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 620px) { .frequency-grid { grid-template-columns: 1fr; } }
+
+/* Homework 3: responsive controls and charts using the shared palette. */
+.simulation-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
+.simulation-controls label { display: block; margin-bottom: 5px; }
+.simulation-controls input, .simulation-controls select { width: 100%; }
+.simulation-plots figure { margin: 18px 0; }
+.simulation-plots figcaption { margin-bottom: 6px; font-weight: 700; color: #174e94; }
+.simulation-plots svg { display: block; width: 100%; height: auto; border: 1px solid #d9e2ed; border-radius: 8px; background: white; }
+.simulation-plots svg text { font: 12px system-ui, sans-serif; fill: #53647a; }
+#momentRows, #recordedAttackers { font-variant-numeric: tabular-nums; }
+#momentRows td { white-space: nowrap; }
+@media (max-width: 620px) { .simulation-controls { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 380px) { .simulation-controls { grid-template-columns: 1fr; } }
