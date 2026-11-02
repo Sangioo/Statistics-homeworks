@@ -11,7 +11,7 @@
 </head>
 <body>
   <main>
-    <nav aria-label="Main navigation"><a href="index.html">Home</a><a href="homework-1.html">Previous: curve arithmetic</a><a href="homework-2.html">Previous: Ethereum wallets</a></nav>
+    <nav aria-label="Main navigation"><a href="index.html">Home</a></nav>
     <header>
       <h1>Homework 2: Encryption and cryptanalysis</h1>
       <p>Encrypt the same message in two ways, then investigate what makes each key recoverable.</p>
@@ -19,8 +19,8 @@
     <noscript><p class="answer">Enable JavaScript to run the demonstrations. The explanations and recorded experiment results below remain available without it.</p></noscript>
 
     <section>
-      <h2>From the previous exercise to encryption</h2>
-      <p>The earlier pages introduced <strong>Q = dG</strong> and the role of secp256k1 in Ethereum. The interactive curve there was a smaller illustration, <strong>y² = x³ + 7 (mod 17)</strong>; it did not define a message-encryption protocol. Here we keep the same point-addition idea, use the actual secp256k1 curve, and explicitly define a toy hybrid encryption scheme.</p>
+      <h2>From Homework 1a and 1b to encryption</h2>
+      <p>Homework 1a and 1b introduced <strong>Q = dG</strong> and the role of secp256k1 in Ethereum. The interactive curve there was a smaller illustration, <strong>y² = x³ + 7 (mod 17)</strong>; it did not define a message-encryption protocol. Here we keep the same point-addition idea, use the actual secp256k1 curve, and explicitly define a toy hybrid encryption scheme.</p>
       <p>Both schemes below encrypt <strong>“Meet me at the library at noon.”</strong> You can change the message and keys. The ECC recipient key is deliberately restricted to <strong>1 ≤ d ≤ 4096</strong>, only 12 bits of choice. This makes the attack practical even though the underlying curve is large.</p>
       <details>
         <summary>Curve parameters and implementation</summary>
@@ -30,7 +30,7 @@
           <dt>Gᵧ</dt><dd><code>483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8</code></dd>
           <dt>n</dt><dd><code>fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141</code></dd>
         </dl>
-        <p>Point addition uses modular inverses, as in the previous exercise; scalar multiplication uses double-and-add. The point at infinity is the identity. <a href="hmwk2-cipher-core.js">View the implementation</a>.</p>
+        <p>Point addition uses modular inverses, as in Homework 1a; scalar multiplication uses double-and-add. The point at infinity is the identity. <a href="hmwk2-cipher-core.js">View the implementation</a>.</p>
       </details>
     </section>
 
