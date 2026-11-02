@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homework 4 — Welford, sampling mean and variance</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="homework4.js" defer></script>
+</head>
+<body>
+  <main>
+    <nav><a href="../index.html">Home</a><a href="../homework-2-ciphers.html">Homework 2: Ciphers</a><a href="../homework-3.html">Homework 3: Penetration</a></nav>
+    <header>
+      <h1>Homework 4: Sampling mean and variance</h1>
+      <p>Update estimates one score at a time, then explore how their sampling distributions change.</p>
+    </header>
+
+    <section>
+      <h2>Exercise 1 — Welford’s recurrence formulas</h2>
+      <p>We want to update the mean and variance when one new observation arrives, using only the previous count, mean and sum of squares. Let x₁, …, xₙ be the observations collected so far.</p>
+      <p class="answer"><strong>Notation used throughout this homework:</strong> μ denotes the theoretical population mean; μₙ = (1/n)∑ᵢ₌₁ⁿ xᵢ denotes the sample mean after n observations. For hacker j, this becomes μⱼ,ₙ. The average of the m hackers’ sample means is μ̄ₙ = (1/m)∑ⱼ₌₁ᵐ μⱼ,ₙ. A subscript therefore distinguishes an estimated mean from the population mean μ.</p>
+      <p>Define the centered sum of squares <strong>SSₙ = ∑ᵢ₌₁ⁿ(xᵢ − μₙ)²</strong>. The descriptive variance is vₙ = SSₙ/n; the unbiased sample variance is sₙ² = SSₙ/(n − 1), defined for n ≥ 2. In Exercise 2, “sample variance” always means sₙ², which estimates the population variance σ².</p>
+
+      <h3>1. Recover the recurrence for the mean</h3>
+      <p>For n ≥ 2, assume we already know μₙ₋₁. By its definition, the sum of the first n − 1 observations is ∑ᵢ₌₁ⁿ⁻¹ xᵢ = (n − 1)μₙ₋₁. Separate the new value xₙ from that sum:</p>
+      <p class="answer">μₙ = [∑ᵢ₌₁ⁿ⁻¹ xᵢ + xₙ]/n<br>
+        = [(n − 1)μₙ₋₁ + xₙ]/n<br>
+        = [nμₙ₋₁ + (xₙ − μₙ₋₁)]/n<br>
+        = <strong>μₙ₋₁ + (xₙ − μₙ₋₁)/n</strong>.</p>
+      <p>Write δₙ = xₙ − μₙ₋₁ for the distance of the new observation from the <em>old</em> mean. Knuth’s recurrence is then μₙ = μₙ₋₁ + δₙ/n: the mean moves by 1/n of that distance. We will use these two consequences:</p>
+      <p class="answer">Mean shift: μₙ − μₙ₋₁ = δₙ/n.<br>
+        New residual: xₙ − μₙ = xₙ − (μₙ₋₁ + δₙ/n)<br>
+        = δₙ − δₙ/n = [(n − 1)/n]δₙ.</p>
+
+      <h3>2. Account for the change in every old residual</h3>
+      <p>We cannot obtain SSₙ just by adding the new squared residual to SSₙ₋₁: the first n − 1 observations must also be measured relative to the new mean μₙ. For each old observation, add and subtract μₙ₋₁:</p>
+      <p class="answer">xᵢ − μₙ = (xᵢ − μₙ₋₁) − (μₙ − μₙ₋₁)<br>
+        = (xᵢ − μₙ₋₁) − δₙ/n, for i = 1, …, n − 1.</p>
+      <p>Now separate the new observation in the definition of SSₙ and use (a − b)² = a² − 2ab + b² on each old residual:</p>
+      <p class="answer">SSₙ = ∑ᵢ₌₁ⁿ⁻¹(xᵢ − μₙ)² + (xₙ − μₙ)²<br>
+        = ∑ᵢ₌₁ⁿ⁻¹[(xᵢ − μₙ₋₁) − δₙ/n]² + (xₙ − μₙ)²<br>
+        = ∑ᵢ₌₁ⁿ⁻¹(xᵢ − μₙ₋₁)²<br>
+        − (2δₙ/n)∑ᵢ₌₁ⁿ⁻¹(xᵢ − μₙ₋₁)<br>
+        + (n − 1)δₙ²/n² + (xₙ − μₙ)².</p>
+      <p>The first sum is exactly SSₙ₋₁. The constant δₙ²/n² appears once for each of the n − 1 old observations, which explains its multiplier. The cross term vanishes because deviations from their own mean sum to zero:</p>
+      <p class="answer">∑ᵢ₌₁ⁿ⁻¹(xᵢ − μₙ₋₁)<br>
+        = ∑ᵢ₌₁ⁿ⁻¹xᵢ − (n − 1)μₙ₋₁<br>
+        = (n − 1)μₙ₋₁ − (n − 1)μₙ₋₁ = 0.</p>
+
+      <h3>3. Simplify to Welford’s SS recurrence</h3>
+      <p>Substitute the new residual xₙ − μₙ = [(n − 1)/n]δₙ from step 1 and combine the two remaining correction terms:</p>
+      <p class="answer">SSₙ = SSₙ₋₁ + (n − 1)δₙ²/n² + (n − 1)²δₙ²/n²<br>
+        = SSₙ₋₁ + [(n − 1) + (n − 1)²]δₙ²/n²<br>
+        = SSₙ₋₁ + [n(n − 1)/n²]δₙ²<br>
+        = <strong>SSₙ₋₁ + [(n − 1)/n]δₙ²</strong>.</p>
+      <p>Finally, one factor δₙ is xₙ − μₙ₋₁, and the other factor [(n − 1)/n]δₙ is xₙ − μₙ. This gives the form used in the code:</p>
+      <p class="answer"><strong>SSₙ = SSₙ₋₁ + (xₙ − μₙ₋₁)(xₙ − μₙ)</strong>.</p>
+      <p>The product uses the distance from the old mean and the distance from the new mean. Thus the update needs only the previous SS, the previous mean, the new score and the count.</p>
+
+      <h3>4. Obtain the descriptive variance recurrence</h3>
+      <p>Since vₙ = SSₙ/n and vₙ₋₁ = SSₙ₋₁/(n − 1), replace SSₙ₋₁ by (n − 1)vₙ₋₁ and divide the SS recurrence by n:</p>
+      <p class="answer">vₙ = [SSₙ₋₁ + ((n − 1)/n)δₙ²]/n<br>
+        = [(n − 1)vₙ₋₁]/n + [(n − 1)/n²]δₙ²<br>
+        = <strong>[(n − 1)/n]vₙ₋₁ + [(n − 1)/n²]δₙ²</strong>, for n ≥ 2.</p>
+
+      <h3>5. Obtain the unbiased sample variance recurrence</h3>
+      <p>Now use sₙ² = SSₙ/(n − 1). The previous sample contains n − 1 observations, so its sample-variance denominator is (n − 1) − 1 = n − 2. Therefore SSₙ₋₁ = (n − 2)sₙ₋₁². Substitute this identity and divide the SS recurrence by n − 1:</p>
+      <p class="answer">sₙ² = [SSₙ₋₁ + ((n − 1)/n)δₙ²]/(n − 1)<br>
+        = [(n − 2)sₙ₋₁²]/(n − 1) + [(n − 1)δₙ²]/[n(n − 1)]<br>
+        = <strong>[(n − 2)/(n − 1)]sₙ₋₁² + δₙ²/n</strong>, for n ≥ 3.</p>
+      <p>The correction term simplifies to δₙ²/n because the factor n − 1 cancels. This recurrence starts at n = 3 because s₁² is undefined. Dividing the updated SS directly by n − 1 works from n = 2 onward.</p>
+
+      <h3>6. Initialize and implement in three lines</h3>
+      <p>For the first observation, μ₁ = x₁ and SS₁ = v₁ = 0. At n = 2, δ₂ = x₂ − x₁, so SS₂ = δ₂²/2 and s₂² = SS₂/(2 − 1) = (x₂ − x₁)²/2.</p>
+      <p>In code, initialize <code>state = { n: 0, mu: 0, ss: 0 }</code>. Here <code>mu</code> represents the running mean μₙ; its initial zero is a placeholder before any observations arrive. For each new score <code>x</code>, the same function used by the experiment performs:</p>
+      <pre><code>const delta = x - state.mu;
+state.mu += delta / ++state.n;
+state.ss += delta * (x - state.mu);</code></pre>
+      <p>The first line computes δₙ using the old mean. The second increments the count to n and computes μₙ. The third updates SS using the old residual saved in <code>delta</code> and the new residual <code>x - state.mu</code>. On the very first update, the mean becomes x₁ and the new residual is zero, so SS remains zero as required.</p>
+      <p>After the update, use <code>state.ss / state.n</code> for vₙ, or <code>state.n &gt; 1 ? state.ss / (state.n - 1) : null</code> for sₙ². Each observation requires constant memory and constant work. Updating centered deviations also avoids subtracting two potentially large, nearly equal quantities in ∑xᵢ² − nμₙ².</p>
+      <p><strong>Worked check with scores 2, 4, 6:</strong> after the first score, μ₁ = 2 and SS₁ = 0. For x₂ = 4, δ₂ = 4 − 2 = 2, μ₂ = 2 + 2/2 = 3, and SS₂ = 0 + 2(4 − 3) = 2. For x₃ = 6, δ₃ = 6 − 3 = 3, μ₃ = 3 + 3/3 = 4, and SS₃ = 2 + 3(6 − 4) = 8. Hence v₃ = 8/3 and s₃² = 8/2 = 4. Directly, (2 − 4)² + (4 − 4)² + (6 − 4)² = 8, confirming SS₃.</p>
+    </section>
+
+    <section>
+      <h2>Exercise 2 — Scored penetration attempts</h2>
+      <p>There are m hackers and n systems. Each hacker j receives one score Xⱼ,ᵢ for each system i. Scores are modeled as independent and identically distributed, both within and between hackers, with a fixed <strong>discrete uniform distribution on {0, 1, …, 10}</strong>. Each integer has probability 1/11. This extends the previous homework from a binary success indicator to a graded score.</p>
+      <p class="answer">μ = E[X] = (0 + 1 + … + 10)/11 = 5.<br>
+        E[X²] = 385/11 = 35, so σ² = E[X²] − μ² = <strong>10</strong>.</p>
+      <p>For each hacker, Welford’s update computes μⱼ,ₙ and sⱼ,ₙ² = SSⱼ,ₙ/(n − 1). Across all m hackers, we calculate the average mean μ̄ₙ = (1/m)∑ⱼ μⱼ,ₙ and the average sample variance Bₙ = (1/m)∑ⱼ sⱼ,ₙ². We compare μ̄ₙ with μ = 5 and Bₙ with σ² = 10, then use the trajectories and histograms to observe how the estimates become more concentrated as n increases.</p>
+    </section>
+
+    <section>
+      <h2>Interactive experiment</h2>
+      <form id="simulationForm">
+        <div class="simulation-controls">
+          <div><label for="systems">Maximum systems n</label><input id="systems" type="number" min="2" max="10000" step="1" value="1000" required></div>
+          <div><label for="hackers">Hackers m</label><input id="hackers" type="number" min="2" max="5000" step="1" value="2000" required></div>
+        </div>
+        <button id="runSimulation" type="submit">Run experiment</button>
+      </form>
+      <p class="small">Checkpoints n = 2, 5, 10, 30, 100, 300, 1,000, 3,000 and 10,000 are included up to your maximum, along with the maximum itself. Checkpoints share trajectory prefixes, so comparisons across n are paired. Changing n or m preserves each hacker’s earlier scores. Repeating the same settings reproduces the same results.</p>
+      <p id="simulationError" class="error" role="alert"></p>
+      <p id="simulationStatus" role="status" aria-live="polite">The default experiment runs when the page opens.</p>
+      <noscript><p class="answer">Enable JavaScript to run experiments and view charts. The derivations and theoretical comparisons remain available below.</p></noscript>
+      <div id="simulationResults" hidden>
+        <p id="simulationSummary" class="answer"></p>
+        <h3>Compare averages as n increases</h3>
+        <p>Each pair is <strong>empirical / theoretical</strong>. The average estimates should be close to 5 and 10.</p>
+        <div class="table-wrap"><table>
+          <caption>Average estimates from all m hackers at every checkpoint</caption>
+          <thead><tr><th scope="col">n</th><th scope="col">Average mean μ̄ₙ / μ</th><th scope="col">Average variance Bₙ / σ²</th></tr></thead>
+          <tbody id="momentRows"></tbody>
+        </table></div>
+        <h3>Follow individual hackers</h3>
+        <p>The first eight hackers (or all m if fewer) appear in matching colors. Raw scores show only the first 100 attempts so that every step is visible. Running estimates show the whole experiment, with at most about 400 plotted time points. All calculations use every score. The dashed orange reference lines are 5 for scores and means, and 10 for sample variances. Sample variances start at k = 2.</p>
+        <div class="simulation-plots">
+          <figure><figcaption>Individual scores: the scores themselves do not converge</figcaption><svg id="scorePaths" viewBox="0 0 760 260" role="img" aria-label="Score trajectories for the first hackers"></svg></figure>
+          <figure><figcaption>Running sample means μⱼ,ₖ</figcaption><svg id="meanPaths" viewBox="0 0 760 260" role="img" aria-label="Running sample mean trajectories"></svg></figure>
+          <figure><figcaption>Running sample variances sⱼ,ₖ²</figcaption><svg id="variancePaths" viewBox="0 0 760 260" role="img" aria-label="Running sample variance trajectories"></svg></figure>
+        </div>
+        <h3>Sampling distributions across hackers</h3>
+        <label for="checkpoint">Systems per hacker</label><select id="checkpoint"></select>
+        <p>Bars give the fraction of hackers in each interval and sum to 1. Axes and bins stay fixed across checkpoints within a run, making the narrowing visible. Dashed lines mark 5 and 10. These distributions are discrete at finite n; binning can hide gaps.</p>
+        <div class="simulation-plots">
+          <figure><figcaption>Distribution of sample means</figcaption><svg id="meanHistogram" viewBox="0 0 760 260" role="img" aria-label="Distribution of sample means"></svg></figure>
+          <figure><figcaption>Distribution of sample variances</figcaption><svg id="varianceHistogram" viewBox="0 0 760 260" role="img" aria-label="Distribution of sample variances"></svg></figure>
+        </div>
+        <p id="checkpointSummary" class="answer"></p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why the averages recover μ and σ²</h2>
+      <p>Each hacker’s sample mean and sample variance are <strong>unbiased</strong>: over repeated random samples, their expected values equal the population mean and variance. Here E[·] denotes this theoretical average.</p>
+      <p class="answer">E[μⱼ,ₙ] = (E[Xⱼ,₁] + … + E[Xⱼ,ₙ])/n = nμ/n = μ = 5.<br>
+        E[sⱼ,ₙ²] = E[SSⱼ,ₙ]/(n − 1) = (n − 1)σ²/(n − 1) = σ² = 10.</p>
+      <p>The denominator <strong>n − 1</strong> corrects for measuring deviations from the sample’s own estimated mean: E[SSⱼ,ₙ] = (n − 1)σ². Dividing by n would underestimate σ² on average.</p>
+      <p>When we average these estimates across independent hackers, random errors tend to cancel. By the Law of Large Numbers, as m grows, <strong>μ̄ₙ approaches 5 and Bₙ approaches 10</strong>, even with a fixed n ≥ 2. A finite experiment usually gives values close to these targets, rather than exact equality.</p>
+      <p>Increasing <strong>m</strong> makes the averages across hackers more stable; increasing <strong>n</strong> makes each hacker’s own estimates more precise.</p>
+    </section>
+
+    <section>
+      <h2>What changes when the number of systems increases?</h2>
+      <p>Use the checkpoint selector to compare the histograms for small and large n. With only a few scores per hacker, the sample means and sample variances can differ substantially between hackers. As n increases, each estimate uses more observations: the sample means become concentrated around μ = 5, and the sample variances become concentrated around σ² = 10. The running trajectories also tend to fluctuate less as more scores are included.</p>
+      <div class="table-wrap"><table>
+        <caption>Recorded default experiment with m = 2,000 hackers; empirical / theoretical averages</caption>
+        <thead><tr><th scope="col">Systems n</th><th scope="col">Average mean μ̄ₙ / μ</th><th scope="col">Average variance Bₙ / σ²</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">2</th><td>5.06250 / 5</td><td>9.91950 / 10</td></tr>
+          <tr><th scope="row">10</th><td>5.02770 / 5</td><td>9.97648 / 10</td></tr>
+          <tr><th scope="row">100</th><td>5.01023 / 5</td><td>10.02832 / 10</td></tr>
+          <tr><th scope="row">1,000</th><td>5.00305 / 5</td><td>9.99788 / 10</td></tr>
+        </tbody>
+      </table></div>
+      <p>The recorded averages stay close to their theoretical targets. At n = 1,000, the average sample mean is 5.00305 and the average sample variance is 9.99788. This recorded comparison stays fixed; the interactive results above reflect your selected settings.</p>
+      <p>Both μₙ and sₙ² are consistent estimators: with more observations they concentrate around the population mean and variance. This does not mean that every trajectory or average gets closer to its target at every step. For example, the recorded average sample variance moves slightly farther from 10 between n = 10 and n = 100 before becoming closer at n = 1,000.</p>
+      <p>Increasing m averages over more independent hackers and makes the experimental comparison more stable. Increasing n improves each hacker’s estimate. The variability of the individual scores themselves remains σ² = 10; it is the estimates that become more stable. Unbiasedness describes the correct target on average, even at small n, while greater precision requires enough observations.</p>
+    </section>
+
+    <section>
+      <h2>Why this matters in inferential statistics</h2>
+      <p>In real data, μ and σ² are usually unknown. A sample mean estimates the population mean, and the unbiased sample variance estimates the unknown population variance. The simulation lets us see their repeated-sampling behavior against known targets: bias describes where estimates are centered, while sampling variability describes their precision.</p>
+      <p>For large n, the Central Limit Theorem and consistency of sₙ² justify an approximate 95% confidence interval <strong>μₙ ± 1.96 √(sₙ²/n)</strong> for μ. Across repeated independent samples, about 95% of intervals constructed this way cover the fixed population mean, asymptotically. The standard error is sₙ/√n, not sₙ². These uncertainty estimates support confidence intervals, hypothesis tests and sample-size planning; roughly quadrupling n halves the standard error.</p>
+      <p>The uniform scores here are not normally distributed, so small-sample normal, exact Student-t, or exact chi-square variance inference is not automatically justified. The conclusions depend on the stated independence and common-distribution assumptions; correlated penetration attempts would change the sampling variability.</p>
+    </section>
+  </main>
+</body>
+</html>
