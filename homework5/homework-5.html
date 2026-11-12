@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Homework 5 — Integration and the normal CDF</title>
+		<link rel="stylesheet" href="../style.css" />
+		<script src="hmwk5-integration-normal.js" defer></script>
+	</head>
+	<body>
+		<main>
+			<nav aria-label="Main navigation">
+				<a href="../index.html">Home</a>
+			</nav>
+			<header>
+				<h1>Homework 5: Integration and the normal CDF</h1>
+				<p>
+					Compare domain partitions with range partitions, then build
+					a numerical standard-normal CDF.
+				</p>
+			</header>
+
+			<section>
+				<h2>Exercise 1 — Riemann and Lebesgue integration</h2>
+				<p>
+					A Riemann sum partitions the <strong>domain</strong> into
+					small intervals. In this experiment we use midpoint samples:
+				</p>
+				<p class="answer">
+					R<sub>n</sub> = ∑<sub>i=1</sub><sup>n</sup> f((x<sub
+						>i-1</sub
+					>
+					+ x<sub>i</sub>)/2)(x<sub>i</sub> - x<sub>i-1</sub>).
+				</p>
+				<p>
+					A Lebesgue-style finite approximation partitions the
+					<strong>range</strong> into value bins. We sample the domain
+					to estimate the measure of each preimage and multiply that
+					measure by the bin midpoint:
+				</p>
+				<p class="answer">
+					L<sub>m,N</sub> = ∑<sub>j=1</sub><sup>m</sup> y<sub>j</sub
+					><sup>*</sup> · λ({x : f(x) is in range bin j}).
+				</p>
+				<p>
+					The second method is still numerical: the preimage measures
+					are estimated from N equally spaced domain probes. It is
+					therefore a range-partition implementation of the Lebesgue
+					idea, not an exact symbolic measurement of every preimage.
+				</p>
+
+				<form id="integrationForm">
+					<div class="simulation-controls">
+						<div>
+							<label for="functionChoice">Function</label>
+							<select id="functionChoice">
+								<option value="sin">sin(x), [0, π]</option>
+								<option value="square">x², [0, 1]</option>
+								<option value="stepUp">
+									1 if x &lt; 0.5, 3 otherwise
+								</option>
+								<option value="absolute">
+									|x - 0.5|, [0, 1]
+								</option>
+								<option value="inverseRoot">
+									1/√x, (0, 1]
+								</option>
+								<option value="stepDown">
+									1 if x &lt; 0.5, 0 otherwise
+								</option>
+								<option value="sinc">sin(x)/x, [0, π]</option>
+								<option value="dirichlet">
+									Dirichlet function, [0, 1]
+								</option>
+								<option value="thomae">
+									Thomae function, [0, 1]
+								</option>
+							</select>
+						</div>
+						<div>
+							<label for="domainSteps">Domain intervals n</label
+							><input
+								id="domainSteps"
+								type="number"
+								min="10"
+								max="200000"
+								step="10"
+								value="1000"
+								required
+							/>
+						</div>
+						<div>
+							<label for="rangeBins">Range bins m</label
+							><input
+								id="rangeBins"
+								type="number"
+								min="4"
+								max="500"
+								step="1"
+								value="50"
+								required
+							/>
+						</div>
+						<div>
+							<label for="probeCount">Preimage probes N</label
+							><input
+								id="probeCount"
+								type="number"
+								min="100"
+								max="200000"
+								step="100"
+								value="10000"
+								required
+							/>
+						</div>
+					</div>
+					<button type="submit">
+						Compute integration comparison
+					</button>
+				</form>
+				<p id="integrationError" class="error" role="alert"></p>
+				<p id="integrationStatus" role="status" aria-live="polite">
+					The default comparison runs when the page opens.
+				</p>
+				<div id="integrationResults" hidden>
+					<p id="integrationSummary" class="answer"></p>
+					<div class="table-wrap">
+						<table>
+							<caption>
+								Approximation and absolute error relative to the
+								analytic/reference value
+							</caption>
+							<thead>
+								<tr>
+									<th scope="col">Method</th>
+									<th scope="col">Value</th>
+									<th scope="col">Absolute error</th>
+									<th scope="col">Time</th>
+								</tr>
+							</thead>
+							<tbody id="integrationRows"></tbody>
+						</table>
+					</div>
+					<h3>Convergence as the domain resolution grows</h3>
+					<p>
+						The table uses the same range-bin settings and increases
+						both domain partitions and range probes. A step function
+						is Riemann-integrable even though its point of
+						discontinuity is visible in the domain partition; the
+						two methods still approach the same integral.
+					</p>
+					<div class="table-wrap">
+						<table>
+							<caption>
+								Resolution sweep for the selected function
+							</caption>
+							<thead>
+								<tr>
+									<th scope="col">Resolution</th>
+									<th scope="col">Riemann</th>
+									<th scope="col">Lebesgue-style</th>
+									<th scope="col">Riemann error</th>
+									<th scope="col">Lebesgue error</th>
+								</tr>
+							</thead>
+							<tbody id="convergenceRows"></tbody>
+						</table>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<h2>What the examples show</h2>
+				<p>
+					For continuous functions such as sin(x), x², |x - 0.5| and
+					the removable-continuity function sin(x)/x (where its value
+					at zero is defined as 1), both constructions converge to the
+					same integral. The range method can be less accurate at a
+					fixed budget because quantizing function values adds a
+					second discretization error.
+				</p>
+				<p>
+					Jump functions are Riemann-integrable because their
+					discontinuities have measure zero. They are also natural
+					Lebesgue examples: the preimages of the two values are
+					intervals whose measures can be estimated directly. The
+					improper integral of 1/√x is finite and equals 2, but the
+					endpoint is singular, so truncation and a suitable
+					quadrature rule are important.
+				</p>
+				<p class="answer">
+					<strong>Pathological caution.</strong> The Dirichlet
+					function is 1 on rationals and 0 on irrationals. It is not
+					Riemann-integrable, while its Lebesgue integral is 0 because
+					the rationals have measure zero. A floating-point grid
+					contains only one kind of representation and cannot test
+					rationality; this page therefore reports the literal
+					sampled-grid behavior and explains why it is not evidence
+					about the exact function. Thomae’s function is
+					Riemann-integrable with integral 0, and a range method
+					usually sees its small rational values disappear as
+					resolution increases.
+				</p>
+			</section>
+
+			<section>
+				<h2>Exercise 2 — Numerical computation of the normal CDF</h2>
+				<p>For a standard normal random variable Z, the CDF is</p>
+				<p class="answer">
+					Φ(z) = (1/√(2π)) ∫<sub>-∞</sub><sup>z</sup> e<sup
+						>-t²/2</sup
+					>
+					dt = ½[1 + erf(z/√2)].
+				</p>
+				<p>
+					There is no elementary antiderivative for e<sup>-t²</sup>.
+					Liouville’s theorem on elementary antiderivatives implies
+					that an elementary antiderivative would require a
+					rational-function correction multiplying e<sup>-t²</sup>;
+					solving the resulting differential equation would require a
+					rational function that does not exist. The error function is
+					introduced precisely to name this non-elementary integral.
+				</p>
+				<p>
+					Special-function notation gives an exact analytical
+					representation, but software still has to evaluate erf
+					numerically. Below, Simpson integration, the erf power
+					series, and a standard erf approximation are compared
+					against trusted reference values. The approximation is
+					useful in production because it is fast and has a small,
+					controlled error; the series makes the analytical connection
+					visible.
+				</p>
+				<form id="normalForm">
+					<div class="simulation-controls">
+						<div>
+							<label for="normalZ">Evaluate at z</label
+							><input
+								id="normalZ"
+								type="number"
+								step="any"
+								value="1.96"
+								required
+							/>
+						</div>
+						<div>
+							<label for="normalSteps">Simpson subintervals</label
+							><input
+								id="normalSteps"
+								type="number"
+								min="20"
+								max="200000"
+								step="2"
+								value="1000"
+								required
+							/>
+						</div>
+						<div>
+							<label for="seriesTerms">Erf series terms</label
+							><input
+								id="seriesTerms"
+								type="number"
+								min="10"
+								max="1000"
+								step="1"
+								value="80"
+								required
+							/>
+						</div>
+					</div>
+					<button type="submit">Compute normal CDF</button>
+				</form>
+				<p id="normalError" class="error" role="alert"></p>
+				<p id="normalStatus" role="status" aria-live="polite">
+					The default normal-CDF comparison runs when the page opens.
+				</p>
+				<div id="normalResults" hidden>
+					<p id="normalSummary" class="answer"></p>
+					<div class="table-wrap">
+						<table>
+							<caption>
+								Standard normal CDF methods
+							</caption>
+							<thead>
+								<tr>
+									<th scope="col">Method</th>
+									<th scope="col">Φ(z)</th>
+									<th scope="col">Absolute error</th>
+									<th scope="col">Time</th>
+								</tr>
+							</thead>
+							<tbody id="normalRows"></tbody>
+						</table>
+					</div>
+					<h3>Reference checks</h3>
+					<p>
+						The following values are standard reference values (also
+						available from statistical tables and the
+						<a
+							href="https://faculty.etsu.edu/gardnerr/4047/notes-Hogg-McKean-Craig/Hogg-McKean-Craig-3-4.pdf"
+							>course notes</a
+						>). They provide a broader accuracy check than a single
+						z value.
+					</p>
+					<div class="table-wrap">
+						<table>
+							<caption>
+								Approximation method checked at several z values
+							</caption>
+							<thead>
+								<tr>
+									<th scope="col">z</th>
+									<th scope="col">Reference Φ(z)</th>
+									<th scope="col">Computed Φ(z)</th>
+									<th scope="col">Absolute error</th>
+								</tr>
+							</thead>
+							<tbody id="normalChecks"></tbody>
+						</table>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<h2>Conclusion</h2>
+				<p>
+					Riemann sums are often the simplest choice for a smooth
+					function because domain samples are straightforward and
+					convergence is easy to visualize. A Lebesgue-style range
+					partition groups points with similar values and can be
+					advantageous for simple-valued functions or when preimage
+					measures are easy to calculate, but numerical range
+					quantization introduces its own error. For every
+					Riemann-integrable example above, both methods target the
+					same integral; for Dirichlet’s function, the exact
+					Lebesgue/Riemann distinction cannot be recovered from a
+					naive floating-point grid.
+				</p>
+				<p>
+					For the normal CDF, numerical integration is conceptually
+					direct, while erf-based methods are faster and more stable
+					for repeated evaluation. None of these numerical procedures
+					contradicts the non-elementary nature of the antiderivative:
+					they are algorithms for evaluating a special function whose
+					defining integral has no elementary closed form.
+				</p>
+			</section>
+		</main>
+	</body>
+</html>
