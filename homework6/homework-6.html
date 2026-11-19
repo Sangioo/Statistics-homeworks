@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homework 6 — Statistical independence</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="homework6.js" defer></script>
+</head>
+<body>
+  <main>
+    <nav aria-label="Main navigation"><a href="../index.html">Home</a></nav>
+    <header>
+      <h1>Homework 6: Statistical independence</h1>
+      <p>Contingency tables, marginal and conditional frequencies, and the chi-square test.</p>
+    </header>
+
+    <section>
+      <h2>Data and contingency table</h2>
+      <p>Each observation is a pair <strong>(X<sub>k</sub>, F<sub>k</sub>)</strong>. Here <strong>X</strong> is an incident's entry vector and <strong>F</strong> its containment-time band; cell counts are written <em>f<sub>ij</sub></em>. The fixed synthetic sample has <strong>n = 600</strong> observations.</p>
+      <p class="small">This is a teaching dataset, not empirical security evidence.</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Observed counts of X by F, n = 600</caption>
+          <thead>
+            <tr>
+              <th scope="col">X \ F</th>
+              <th scope="col">Under 1 hour</th>
+              <th scope="col">1–24 hours</th>
+              <th scope="col">Over 24 hours</th>
+              <th scope="col">Row total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Phishing</th><td>120</td><td>60</td><td>20</td><td>200</td></tr>
+            <tr><th scope="row">Credential stuffing</th><td>70</td><td>60</td><td>20</td><td>150</td></tr>
+            <tr><th scope="row">Exposed service</th><td>50</td><td>80</td><td>50</td><td>180</td></tr>
+            <tr><th scope="row">Supply chain</th><td>20</td><td>40</td><td>10</td><td>70</td></tr>
+            <tr><th scope="row">Column total</th><td>260</td><td>240</td><td>100</td><td>600</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="answer">Joint frequency: <em>f<sub>ij</sub></em>. Row marginal: <em>f<sub>i·</sub></em>; column marginal: <em>f<sub>·j</sub></em>. Conditional frequency of F given X: <em>f<sub>ij</sub></em>/<em>f<sub>i·</sub></em>. For example, 120/200 = 60% of phishing incidents were contained within one hour, compared with the marginal 260/600 ≈ 43.3%.</p>
+    </section>
+
+    <section>
+      <h2>Independence and the chi-square test</h2>
+      <p>X and F are independent when</p>
+      <p class="answer">P(X = x<sub>i</sub>, F = c<sub>j</sub>) = P(X = x<sub>i</sub>) P(F = c<sub>j</sub>) for all <em>i, j</em>,<br>
+        equivalently P(F = c<sub>j</sub> | X = x<sub>i</sub>) = P(F = c<sub>j</sub>).</p>
+      <p class="answer"><strong>H<sub>0</sub>:</strong> X and F are independent. <strong>H<sub>1</sub>:</strong> they are dependent.</p>
+      <p>The expected count under H<sub>0</sub>, the Pearson statistic, the degrees of freedom and the p-value are</p>
+      <p class="answer"><strong>e<sub>ij</sub></strong> = <em>f<sub>i·</sub> f<sub>·j</sub></em>/<em>n</em>;<br>
+        <strong>χ²</strong> = ∑<sub>i</sub>∑<sub>j</sub> (<em>f<sub>ij</sub></em> − <em>e<sub>ij</sub></em>)²/<em>e<sub>ij</sub></em>;<br>
+        <strong>df</strong> = (<em>r</em> − 1)(<em>c</em> − 1), where <em>r</em> and <em>c</em> are the numbers of X and F levels;<br>
+        <strong>p</strong> = P(χ²<sub>df</sub> ≥ χ²<sub>obs</sub> | H<sub>0</sub>).</p>
+      <p>The approximation requires independent observations and adequate expected counts (about 5 or more per cell). A small p-value is evidence against independence, not a measure of effect strength. Report <strong>Cramér's V</strong> = √(χ² / [<em>n</em> min(<em>r</em> − 1, <em>c</em> − 1)]) as well; rough benchmarks are 0.1, 0.3 and 0.5 for small, medium and large associations.</p>
+    </section>
+
+    <section>
+      <h2>Interactive analysis</h2>
+      <p>The bundled sample is analysed on load. The seeded sample is a control generated under independence; custom input accepts one X, F pair per row.</p>
+      <form id="analysisForm">
+        <div class="simulation-controls">
+          <div>
+            <label for="dataSource">Dataset</label>
+            <select id="dataSource">
+              <option value="recorded">Illustrative sample (n = 600)</option>
+              <option value="independent">Seeded control (n = 600)</option>
+              <option value="custom">Custom data</option>
+            </select>
+          </div>
+        </div>
+        <div id="customData" hidden>
+          <label for="csvInput">Observations: X, F</label>
+          <textarea id="csvInput" rows="6" spellcheck="false" style="width: 100%; padding: 8px; border: 1px solid #9aaac0; border-radius: 6px; font: inherit; resize: vertical" placeholder="X,F&#10;Phishing,Under 1 hour&#10;Exposed service,Over 24 hours&#10;Phishing,1–24 hours"></textarea>
+          <p class="small">Comma, semicolon or tab separated; blank lines and # comments are ignored; at most 12 levels per variable.</p>
+          <div>
+            <label for="hasHeader"><input id="hasHeader" type="checkbox" style="width: auto" checked> First row is a header</label>
+            <button id="loadSample" type="button">Load example</button>
+          </div>
+        </div>
+        <p><button id="analyseButton" type="submit">Analyse</button></p>
+      </form>
+      <p id="analysisError" class="error" role="alert"></p>
+      <p id="analysisStatus" role="status" aria-live="polite">Analysing the illustrative sample…</p>
+      <noscript><p class="answer">Enable JavaScript to build the tables and compute the test; the observed table and formulas above remain available.</p></noscript>
+
+      <div id="analysisResults" hidden>
+        <h3>Summary</h3>
+        <div id="analysisSummary" class="answer"></div>
+        <p class="small">Displayed values are rounded; calculations use full precision.</p>
+
+        <h3>Observed counts and marginals</h3>
+        <div class="table-wrap">
+          <table id="observedTable">
+            <caption></caption>
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Conditional frequencies: P(F | X)</h3>
+        <div class="table-wrap">
+          <table id="rowConditionalTable">
+            <caption></caption>
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Expected counts under independence</h3>
+        <div class="table-wrap">
+          <table id="expectedTable">
+            <caption></caption>
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Chi-square null distribution</h3>
+        <div class="simulation-plots">
+          <figure>
+            <figcaption>Observed statistic, 5% critical value and p-value</figcaption>
+            <svg id="chiPlot" viewBox="0 0 760 320" role="img" aria-label="Chi-square null distribution"></svg>
+          </figure>
+        </div>
+        <p id="chiPlotNote" class="small"></p>
+
+        <h3>Interpretation</h3>
+        <div id="analysisInterpretation"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Association and causation</h2>
+      <p>A significant chi-square is evidence of association, not proof of causation. The data are observational: entry vectors were not assigned, containment times were not controlled, and a third variable could affect both. Failing to reject independence is also not proof of independence, and a small p-value does not imply a strong association.</p>
+      <p>A causal claim would require a credible design, such as randomization or a natural experiment, temporal ordering, a plausible mechanism, and control of confounders.</p>
+    </section>
+
+    <section>
+      <h2>Conclusion</h2>
+      <p>For the illustrative sample, χ² = 57.713 with df = 6 and p ≈ 1.31 × 10<sup>−10</sup>, so we reject independence at the 5% level. Cramér's V ≈ 0.219 indicates a modest association. The seeded control gives χ² = 5.632 and p = 0.4657, consistent with independence.</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,13 +1,16 @@
 # Statistics and Cryptography Homeworks
 
-A small static website in English. **Homework 3: Penetration, LLN and CLT** follows the shared layout of the earlier pages, which remain at their original URLs.
+A small static website in English. The pages share the same layout and stylesheet; earlier pages remain at their original URLs.
 
-- `index.html` links to all four homework pages.
+- `index.html` links to all homework pages.
 - `homework-1.html` is the earlier private-key/public-point exploration on y² = x³ + 7 (mod 17), using `hmwk1-script.js`.
 - `homework-2.html` is the earlier mnemonic-to-Ethereum-address report. Its original filename is preserved.
 - `homework-2-ciphers.html` is the new assignment: actual secp256k1 hybrid encryption, Caesar encryption, corpus-based key recovery, length experiments, and a bounded ECC private-key attack.
 - `style.css` provides the common blue-and-white styling.
 - `homework-3.html` studies Bernoulli and Rademacher penetration scores, with interactive trajectories, endpoint histograms, empirical/theoretical moments, LLN and CLT explanations, and an attacker-count comparison integrated into the final interpretation.
+- `homework4/index.html` derives Welford's recurrences and explores the sampling behavior of means and variances.
+- `homework5/homework-5.html` compares domain and range partitions for integration and computes the standard normal CDF numerically.
+- `homework6/homework-6.html` builds contingency tables, computes conditional and marginal frequencies, and performs a chi-square test of independence with a seeded control sample.
 
 ## Homework 3: stochastic penetration
 
@@ -30,6 +33,17 @@ node --test tests/*.test.js
 ```
 
 The interactive controls support n ≤ 10,000 and 2 ≤ m ≤ 5,000. Long plots draw about 500 time points per path to keep the page responsive; all increments and checkpoint endpoints are calculated. The maximum run is 50 million increments and may briefly pause the page on slower devices.
+
+## Homework 6: statistical independence
+
+Open `homework6/homework-6.html`. It follows the shared page style and uses one companion script, `homework6/homework6.js`, with no dependencies.
+
+- The illustrative sample has 600 incidents cross-classified by entry vector X (4 levels) and containment-time band F (3 levels).
+- A second, seeded sample of 600 pairs is generated with X and F independent (seed 2026), providing a control that should usually fail to reject independence.
+- The page shows observed counts with marginals, row-conditional frequencies, expected counts under independence, the Pearson χ² statistic, the asymptotic p-value from the regularized incomplete gamma function, Cramér's V, and a plot of the χ² null distribution.
+- Custom data accepts one `X,F` pair per row with comma, semicolon or tab separators; the first row can be treated as a header.
+
+The illustrative dataset gives χ² = 57.713 with df = 6 and p ≈ 1.31 × 10⁻¹⁰; the control gives χ² = 5.632 with df = 6 and p ≈ 0.4657. These values are reported in the page and are recalculated in the browser. Statistical association is discussed separately from causation, and the expected-count assumptions are stated explicitly.
 
 ## Open the homework
 
