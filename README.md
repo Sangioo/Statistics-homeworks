@@ -11,6 +11,7 @@ A small static website in English. The pages share the same layout and styleshee
 - `homework4/index.html` derives Welford's recurrences and explores the sampling behavior of means and variances.
 - `homework5/homework-5.html` compares domain and range partitions for integration and computes the standard normal CDF numerically.
 - `homework6/homework-6.html` builds contingency tables, computes conditional and marginal frequencies, and performs a chi-square test of independence with a seeded control sample.
+- `homework7/index.html` compares convergence in probability, almost sure, mean-square and distribution, explains the LLN/CLT and the √n scale, and demonstrates Bayesian updating with Beta–Binomial and medical-test calculators.
 
 ## Homework 3: stochastic penetration
 
@@ -44,6 +45,17 @@ Open `homework6/homework-6.html`. It follows the shared page style and uses one 
 - Custom data accepts one `X,F` pair per row with comma, semicolon or tab separators; the first row can be treated as a header.
 
 The illustrative dataset gives χ² = 57.713 with df = 6 and p ≈ 1.31 × 10⁻¹⁰; the control gives χ² = 5.632 with df = 6 and p ≈ 0.4657. These values are reported in the page and are recalculated in the browser. Statistical association is discussed separately from causation, and the expected-count assumptions are stated explicitly.
+
+## Homework 7: convergence and Bayesian inference
+
+Open `homework7/index.html`. It uses the shared stylesheet and one companion script, `homework7/homework7.js`, with no dependencies.
+
+- Part I defines the four modes of convergence, their implications and standard counterexamples; it covers the weak, strong and mean-square LLN, the CLT, variance additivity and why √n appears.
+- The convergence lab simulates Bernoulli, uniform, exponential or Cauchy paths, plotting running averages and the final distribution.
+- Part II derives conditional probability and Bayes' theorem, defines prior, likelihood, posterior and marginal likelihood, and notes sequential updating.
+- The Bayes lab plots prior, normalised likelihood and posterior for a Beta–Binomial model and compares alternative priors. A medical-test calculator shows the base-rate effect.
+
+All calculations run in the browser; the convergence lab is reproducible via its seed.
 
 ## Open the homework
 

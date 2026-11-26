@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Homework 7 — Convergence and Bayesian inference</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="homework7.js" defer></script>
+</head>
+<body>
+  <main>
+    <nav aria-label="Main navigation"><a href="../index.html">Home</a></nav>
+    <header>
+      <h1>Homework 7: Convergence and Bayesian inference</h1>
+      <p>How random sequences settle down, why √n appears everywhere, and how Bayes' theorem turns a prior into a posterior.</p>
+    </header>
+    <nav aria-label="Contents">
+      <a href="#convergence">Convergence</a>
+      <a href="#lln-clt">LLN and CLT</a>
+      <a href="#lab1">Simulation lab</a>
+      <a href="#bayes">Conditional probability and Bayes</a>
+      <a href="#lab2">Bayes lab</a>
+      <a href="#examples">Examples</a>
+      <a href="#discussion">Discussion</a>
+    </nav>
+
+    <section id="convergence">
+      <h2>1. Modes of convergence</h2>
+      <p>Let <em>X<sub>1</sub>, X<sub>2</sub>, …</em> be random variables and write <em>S<sub>n</sub></em> = <em>X</em><sub>1</sub> + ⋯ + <em>X<sub>n</sub></em>, <em>X̄<sub>n</sub></em> = <em>S<sub>n</sub></em>/<em>n</em>. For iid variables, <em>μ</em> and <em>σ</em><sup>2</sup> denote the common mean and variance.</p>
+      <p class="answer">
+        <strong>In probability:</strong> <em>P</em>(|<em>X<sub>n</sub></em> − <em>X</em>| ≥ <em>ε</em>) → 0.<br>
+        <strong>Almost surely:</strong> <em>P</em>(lim <em>X<sub>n</sub></em> = <em>X</em>) = 1.<br>
+        <strong>In mean square (L<sup>2</sup>):</strong> <em>E</em>[(<em>X<sub>n</sub></em> − <em>X</em>)<sup>2</sup>] → 0.<br>
+        <strong>In distribution:</strong> <em>F<sub>n</sub></em>(<em>x</em>) → <em>F</em>(<em>x</em>) at continuity points of <em>F</em>.
+      </p>
+      <p>The first three control the same pair <em>(X<sub>n</sub>, X)</em> in different ways: a single large draw, the whole realized tail, and average squared error. Distributional convergence controls only the marginal law; <em>X<sub>n</sub></em> and <em>X</em> need not be defined on the same probability space.</p>
+      <p class="answer"><em>L<sup>2</sup></em> ⇒ <em>L<sup>1</sup></em> ⇒ probability ⇒ distribution; &nbsp; almost sure ⇒ probability. Convergence in probability to a constant is equivalent to convergence in distribution to a point mass at that constant.</p>
+      <p>These implications cannot generally be reversed. Independent events with <em>P</em>(<em>A<sub>n</sub></em>) = 1/<em>n</em> give indicators converging in probability but not almost surely (second Borel–Cantelli). The spike <em>X<sub>n</sub></em> = <em>n</em>·1<sub>[0,1/<em>n</em>]</sub> converges almost surely and in probability but not in <em>L<sup>2</sup></em>. Enumerating the dyadic intervals gives <em>L<sup>2</sup></em> convergence without almost sure convergence. Finally, <em>X<sub>n</sub></em> = (−1)<sup><em>n</em></sup><em>X</em> with <em>X</em> ~ <em>N</em>(0,1) always has the same law but does not converge in probability.</p>
+      <p><strong>Tools.</strong> Markov's inequality gives mean-square ⇒ probability; the continuous mapping theorem, Slutsky's theorem and the delta method justify most asymptotic inference. A subsequence converging in probability has an almost surely convergent subsubsequence; Skorokhod's representation lets a distributional limit be realized almost surely on a new space.</p>
+    </section>
+
+    <section id="lln-clt">
+      <h2>2. The LLN, the CLT, and why √n appears</h2>
+      <p><strong>Law of Large Numbers.</strong> The weak law says <em>X̄<sub>n</sub></em> →<sup>P</sup> <em>μ</em> (finite mean suffices; Chebyshev gives the bound <em>σ</em><sup>2</sup>/(<em>nε</em><sup>2</sup>) under finite variance). The strong law says <em>X̄<sub>n</sub></em> → <em>μ</em> almost surely. With finite variance the mean-square law adds the exact rate</p>
+      <p class="answer"><em>E</em>[(<em>X̄<sub>n</sub></em> − <em>μ</em>)<sup>2</sup>] = Var(<em>X̄<sub>n</sub></em>) = <em>σ</em><sup>2</sup>/<em>n</em>, &nbsp; SE(<em>X̄<sub>n</sub></em>) = <em>σ</em>/√<em>n</em>.</p>
+      <p>The LLN locates the average but says nothing about the shape or size of its fluctuations, nor that short samples must “balance out”.</p>
+      <p><strong>Central Limit Theorem.</strong> For iid variables with finite positive variance,</p>
+      <p class="answer"><em>Z<sub>n</sub></em> = √<em>n</em>(<em>X̄<sub>n</sub></em> − <em>μ</em>)/<em>σ</em> ⇒ <em>N</em>(0,1).</p>
+      <p>This is a statement about laws, not about the values <em>Z<sub>n</sub></em> settling down: the histogram becomes normal while the variables keep fluctuating.</p>
+      <p><strong>Where √n comes from.</strong> For square-integrable variables,</p>
+      <p class="answer">Var(<em>S<sub>n</sub></em>) = ∑<em>Var</em>(<em>X<sub>i</sub></em>) + 2∑<sub><em>i</em>&lt;<em>j</em></sub> Cov(<em>X<sub>i</sub></em>, <em>X<sub>j</sub></em>).</p>
+      <p>Independence kills the covariances, so Var(<em>S<sub>n</sub></em>) = <em>nσ</em><sup>2</sup> and SD(<em>S<sub>n</sub></em>) = <em>σ</em>√<em>n</em>. The mean grows like <em>nμ</em> but fluctuations grow only like √<em>n</em>; dividing by <em>σ</em>√<em>n</em> leaves a non-degenerate limit. This single fact gives standard errors, confidence intervals, test statistics, the delta method, MLE asymptotic normality and the Bayesian Bernstein–von Mises approximation. Dependence can inflate the asymptotic variance without changing the √<em>n</em> rate; infinite variance can change the rate entirely — for standard Cauchy data the sample mean is standard Cauchy for every <em>n</em> and never concentrates.</p>
+    </section>
+
+    <section id="lab1">
+      <h2>Interactive lab: seeing convergence</h2>
+      <p>Simulate independent sample paths and watch their running averages. The seeded generator makes each experiment reproducible.</p>
+      <form id="convergenceForm">
+        <div class="simulation-controls">
+          <div><label for="distribution">Distribution</label>
+            <select id="distribution">
+              <option value="bernoulli">Bernoulli(p = 0.3)</option>
+              <option value="uniform">Uniform(0, 1)</option>
+              <option value="exponential">Exponential(rate 1)</option>
+              <option value="cauchy">Cauchy(0, 1) — no mean or variance</option>
+            </select>
+          </div>
+          <div><label for="sampleSize">Sample size n</label><input id="sampleSize" type="number" min="10" max="5000" step="10" value="1000" required></div>
+          <div><label for="simulations">Simulated paths</label><input id="simulations" type="number" min="20" max="1000" step="10" value="400" required></div>
+          <div><label for="seed">Seed</label><input id="seed" type="number" min="1" max="999999999" step="1" value="20261126" required></div>
+          <div><label for="epsilon">Tolerance ε</label><input id="epsilon" type="number" min="0.001" max="2" step="0.001" value="0.1" required></div>
+        </div>
+        <p><button type="submit">Run simulation</button> <button id="newSeed" type="button">New seed</button></p>
+      </form>
+      <p id="convergenceError" class="error" role="alert"></p>
+      <p id="convergenceStatus" role="status" aria-live="polite">The default experiment runs when the page opens.</p>
+      <noscript><p class="answer">Enable JavaScript to run the simulation. The explanations above remain available without it.</p></noscript>
+      <div id="convergenceResults" hidden>
+        <p id="convergenceSummary" class="answer"></p>
+        <div class="simulation-plots">
+          <figure>
+            <figcaption>Running averages for the first 24 paths (log scale in k)</figcaption>
+            <svg id="pathPlot" viewBox="0 0 760 340" role="img" aria-label="Running averages of simulated paths"></svg>
+          </figure>
+          <p class="legend"><span class="key-dot blue"></span> paths &nbsp; <span class="key-dot orange"></span> population centre &nbsp; <span class="key-dot grey"></span> tolerance band</p>
+          <figure>
+            <figcaption>Distribution of the final mean</figcaption>
+            <svg id="histPlot" viewBox="0 0 760 340" role="img" aria-label="Histogram of the final sample mean with limiting density"></svg>
+          </figure>
+          <p id="histNote" class="small"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="bayes">
+      <h2>3. Conditional probability and Bayes' theorem</h2>
+      <p>For <em>P</em>(<em>B</em>) &gt; 0, conditional probability renormalises the sample space to <em>B</em>:</p>
+      <p class="answer"><em>P</em>(<em>A</em> | <em>B</em>) = <em>P</em>(<em>A</em> ∩ <em>B</em>)/<em>P</em>(<em>B</em>), &nbsp; <em>P</em>(<em>A</em>) = ∑<sub><em>i</em></sub> <em>P</em>(<em>A</em> | <em>B<sub>i</sub></em>)<em>P</em>(<em>B<sub>i</sub></em>).</p>
+      <p>Applying the multiplication rule twice gives Bayes' theorem. For a parameter <em>θ</em> with prior density <em>π</em>(<em>θ</em>) and observed data <em>x</em>,</p>
+      <p class="answer"><em>π</em>(<em>θ</em> | <em>x</em>) = <em>L</em>(<em>θ</em>; <em>x</em>)<em>π</em>(<em>θ</em>)/<em>m</em>(<em>x</em>) ∝ <em>L</em>(<em>θ</em>; <em>x</em>)<em>π</em>(<em>θ</em>), &nbsp; <em>m</em>(<em>x</em>) = ∫ <em>L</em>(<em>θ</em>; <em>x</em>)<em>π</em>(<em>θ</em>) d<em>θ</em>.</p>
+      <p><strong>Prior</strong> <em>π</em>(<em>θ</em>) is the pre-data uncertainty. <strong>Likelihood</strong> <em>L</em>(<em>θ</em>; <em>x</em>) = <em>p</em>(<em>x</em> | <em>θ</em>) is a function of <em>θ</em> for fixed data — it is not a probability distribution over <em>θ</em>. <strong>Posterior</strong> <em>π</em>(<em>θ</em> | <em>x</em>) is the updated distribution; it contains everything needed for Bayesian estimation, credible intervals, prediction and decisions. <strong>Marginal likelihood</strong> <em>m</em>(<em>x</em>) normalises the posterior and is the evidence in Bayes factors. Posterior ∝ prior × likelihood is all there is: the posterior of one batch becomes the prior for the next, so updating is sequential and order-independent for a fixed model.</p>
+      <p>Conditional probability is not causation: <em>P</em>(<em>A</em> | <em>B</em>) is an association in the studied population, and a strong association can be reversed by a third variable (Simpson's paradox).</p>
+    </section>
+
+    <section id="lab2">
+      <h2>Interactive lab: from prior to posterior</h2>
+      <p>For a success probability <em>θ</em> with Beta(<em>α</em>, <em>β</em>) prior and <em>x</em> successes in <em>n</em> Bernoulli trials, the posterior is Beta(<em>α</em>+<em>x</em>, <em>β</em>+<em>n</em>−<em>x</em>).</p>
+      <form id="bayesForm">
+        <div class="simulation-controls">
+          <div><label for="priorAlpha">Prior α</label><input id="priorAlpha" type="number" min="0.1" max="100" step="0.1" value="2" required></div>
+          <div><label for="priorBeta">Prior β</label><input id="priorBeta" type="number" min="0.1" max="100" step="0.1" value="2" required></div>
+          <div><label for="successes">Successes x</label><input id="successes" type="number" min="0" max="10000" step="1" value="6" required></div>
+          <div><label for="trials">Trials n</label><input id="trials" type="number" min="1" max="10000" step="1" value="20" required></div>
+          <div><label for="threshold">Threshold θ₀</label><input id="threshold" type="number" min="0" max="1" step="0.01" value="0.5" required></div>
+        </div>
+        <p><button type="submit">Update posterior</button></p>
+      </form>
+      <p id="bayesError" class="error" role="alert"></p>
+      <p id="bayesStatus" role="status" aria-live="polite">The default posterior is computed when the page opens.</p>
+      <noscript><p class="answer">Enable JavaScript to use the interactive posterior. The derivation above remains available without it.</p></noscript>
+      <div id="bayesResults" hidden>
+        <p id="bayesSummary" class="answer"></p>
+        <div class="simulation-plots">
+          <figure>
+            <figcaption>Prior (grey), normalised likelihood (orange) and posterior (blue)</figcaption>
+            <svg id="betaPlot" viewBox="0 0 760 360" role="img" aria-label="Prior, likelihood and posterior densities"></svg>
+          </figure>
+          <p id="betaPlotNote" class="small"></p>
+        </div>
+        <h3>How the prior changes the answer</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>Same data, different priors; <em>P</em>(θ &gt; θ₀ | x)</caption>
+            <thead><tr><th scope="col">Prior</th><th scope="col">Prior mean</th><th scope="col">Posterior mean</th><th scope="col">95% interval</th><th scope="col">P(θ &gt; θ₀ | x)</th></tr></thead>
+            <tbody id="sensitivityRows"></tbody>
+          </table>
+        </div>
+        <p class="small">Differences are largest for small <em>n</em> or strong priors; increase <em>n</em> while keeping <em>x</em>/<em>n</em> fixed to see the likelihood dominate.</p>
+      </div>
+    </section>
+
+    <section id="examples">
+      <h2>4. Worked examples</h2>
+      <h3>Medical diagnosis and the base rate</h3>
+      <p>With prevalence 1%, sensitivity 99% and specificity 95%,</p>
+      <p class="answer"><em>P</em>(<em>D</em> | +) = (0.99 × 0.01)/(0.99 × 0.01 + 0.05 × 0.99) = 0.0099/0.0594 ≈ 0.167.</p>
+      <p>Only about one in six positive tests is a true case: the healthy group is large. At 10% prevalence the same test gives 0.099/0.144 = 0.6875. The evidence is identical; the prior changes the conclusion. Natural frequencies make this concrete:</p>
+      <form id="testForm">
+        <div class="simulation-controls">
+          <div><label for="prevalence">Prevalence P(D), %</label><input id="prevalence" type="number" min="0" max="100" step="0.1" value="1" required></div>
+          <div><label for="sensitivity">Sensitivity P(+|D), %</label><input id="sensitivity" type="number" min="0" max="100" step="0.1" value="99" required></div>
+          <div><label for="specificity">Specificity P(−|H), %</label><input id="specificity" type="number" min="0" max="100" step="0.1" value="95" required></div>
+        </div>
+        <p><button type="submit">Compute posterior</button></p>
+      </form>
+      <p id="testError" class="error" role="alert"></p>
+      <p id="testStatus" role="status" aria-live="polite">The default calculation runs when the page opens.</p>
+      <div id="testResults" hidden>
+        <p id="testSummary" class="answer"></p>
+        <div class="table-wrap">
+          <table>
+            <caption>Expected counts per 10,000 people</caption>
+            <thead><tr><th scope="col"></th><th scope="col">Test positive</th><th scope="col">Test negative</th><th scope="col">Total</th></tr></thead>
+            <tbody id="testRows"></tbody>
+          </table>
+        </div>
+      </div>
+      <h3>Small versus large samples</h3>
+      <p>A uniform prior Beta(1, 1) and a strong prior Beta(10, 10) are compared on the same data. Posterior means and equal-tailed 95% credible intervals:</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Prior sensitivity in the Beta–Binomial model</caption>
+          <thead><tr><th scope="col">Prior</th><th scope="col">1 success in 10</th><th scope="col">600 successes in 1000</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Beta(1, 1)</th><td>0.167, [0.023, 0.413]</td><td>0.600, [0.569, 0.630]</td></tr>
+            <tr><th scope="row">Beta(10, 10)</th><td>0.367, [0.207, 0.543]</td><td>0.598, [0.568, 0.628]</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>With 10 observations the priors give visibly different answers; with 1000 they nearly coincide. Beta priors are conjugate to binomial likelihoods, so updating is just adding successes and failures. Other common conjugate pairs are Normal–Normal (known variance), Gamma–Poisson and Dirichlet–Multinomial.</p>
+    </section>
+
+    <section id="discussion">
+      <h2>5. Advantages, limitations, and influence on conclusions</h2>
+      <p><strong>Advantages.</strong> Bayes' theorem is coherent updating by the ordinary rules of probability. It gives direct probability statements about parameters, lets prior knowledge and physical constraints enter explicitly, stabilises small samples, supports sequential and hierarchical learning, and provides a unified language for prediction, decisions and model comparison. Gaussian priors give ridge regularisation; a Beta prior acts as pseudo-counts.</p>
+      <p><strong>Limitations.</strong> The posterior is conditional on the prior and the model, not a guarantee of truth. Eliciting a prior is hard; strong or conflicting priors can dominate small samples; improper priors can make marginal likelihoods ill-defined; computation (MCMC, variational inference) can be costly; and a misspecified likelihood can produce confident wrong answers. Bernstein–von Mises says prior influence fades for smooth summaries in regular finite-dimensional models (posterior ≈ <em>N</em>(<em>θ̂<sub>n</sub></em>, <em>I</em>(<em>θ̂<sub>n</sub></em>)<sup>−1</sup>/<em>n</em>), but it can fail at boundaries, in high dimensions and for non-identifiable models.</p>
+      <p><strong>Influence on conclusions.</strong> The prior matters most for small samples, tail probabilities, Bayes factors and predictions far from the data; for smooth summaries its weight typically decays like 1/<em>n</em>. Good practice is to report the prior, check sensitivity to reasonable alternatives, run prior predictive checks, and separate robust conclusions from prior-driven ones. Frequentist inference instead fixes the parameter and evaluates procedures over repeated samples: a 95% confidence interval has 95% coverage, while a 95% credible interval contains the parameter with posterior probability 0.95 given the model and prior. A p-value is <em>P</em>(data at least as extreme | <em>H</em><sub>0</sub>), not <em>P</em>(<em>H</em><sub>0</sub> | data).</p>
+    </section>
+
+    <section>
+      <h2>Conclusion</h2>
+      <p>Convergence in distribution is the weakest mode and underlies the CLT; convergence in probability underlies the weak LLN and consistency; almost sure convergence underlies the strong LLN; mean-square convergence underlies MSE and the finite-variance LLN. The LLN locates the average at <em>μ</em>, while the CLT describes fluctuations around it. Variance additivity forces the √<em>n</em> scale that appears in standard errors, intervals and test statistics. Bayes' theorem is conditional probability applied to parameters and data: prior × likelihood, normalised into a posterior. Its conclusions are explicitly conditional on those inputs, which is why sensitivity analysis and honest reporting matter.</p>
+    </section>
+  </main>
+</body>
+</html>
